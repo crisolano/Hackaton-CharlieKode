@@ -30,6 +30,14 @@ def sala(db: Session) -> Sala:
 
 
 @pytest.fixture(autouse=True)
+def _sin_respaldo_de_ia(monkeypatch):
+    """Aísla las pruebas del .env local: el respaldo solo se activa en las que lo piden."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "AI_FALLBACK_PROVIDER", "")
+
+
+@pytest.fixture(autouse=True)
 def _reiniciar_limitador():
     from app.api.deps import limitador_incidencias
 
