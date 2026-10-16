@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from app.core.config import SalaEstado
+from app.core.config import EquipoEstado, SalaEstado
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +124,94 @@ def cargar_salas_dataset(ruta_archivo: Path | str) -> CargaDatasetResult:
             {
                 "nombre": nombre_normalizado,
                 "aforo": aforo,
+                "estado": estado,
+            }
+        )
+
+    return resultado
+
+
+def cargar_equipos_dataset(ruta_archivo: Path | str) -> CargaDatasetResult:
+    """
+    Carga y normaliza el dataset de equipos desde un archivo CSV o JSON.
+
+    Tolera y descarta registros inconsistentes:
+    - Fila sin campo nombre o nombre vacío tras strip.
+    - Nombre de equipo duplicado (comparación insensible a mayúsculas/minúsculas).
+    - Estado no válido (se normaliza al valor por defecto o se rechaza si es desconocido).
+
+    Retorna un CargaDatasetResult con las filas válidas y las filas rechazadas.
+    """
+    path = Path(ruta_archivo)
+    if not path.exists():
+        raise FileNotFoundError(f"No se encontró el archivo de datos: {path}")
+
+    registros_crudos: list[dict[str, Any]] = []
+
+    if path.suffix.lower() == ".json":
+        with open(path, encoding="utf-8") as f:
+            contenido = json.load(f)
+            if isinstance(contenido, list):
+                registros_crudos = contenido
+            elif isinstance(contenido, dict) and "equipos" in contenido:
+                registros_crudos = contenido["equipos"]
+            else:
+                registros_crudos = [contenido]
+    else:
+        with open(path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            registros_crudos = list(reader)
+
+    resultado = CargaDatasetResult(total_leidas=len(registros_crudos))
+    nombres_registrados: set[str] = set()
+    estados_validos = {e.value for e in EquipoEstado}
+
+    for idx, reg in enumerate(registros_crudos, start=1):
+        fila = {str(k).strip().lower(): v for k, v in reg.items() if k is not None}
+
+        nombre_crudo = fila.get("nombre")
+        if not nombre_crudo or not str(nombre_crudo).strip():
+            resultado.rechazadas.append(
+                {
+                    "indice": idx,
+                    "fila": reg,
+                    "motivo": "El nombre del equipo está vacío o no fue especificado",
+                }
+            )
+            continue
+
+        nombre_normalizado = str(nombre_crudo).strip()
+        nombre_clave = nombre_normalizado.lower()
+
+        if nombre_clave in nombres_registrados:
+            resultado.rechazadas.append(
+                {
+                    "indice": idx,
+                    "fila": reg,
+                    "motivo": f"Nombre de equipo duplicado: '{nombre_normalizado}'",
+                }
+            )
+            continue
+
+        estado_crudo = fila.get("estado")
+        if estado_crudo:
+            estado = str(estado_crudo).strip().lower()
+            if estado not in estados_validos:
+                resultado.rechazadas.append(
+                    {
+                        "indice": idx,
+                        "fila": reg,
+                        "motivo": f"Estado de equipo desconocido: '{estado_crudo}'",
+                    }
+                )
+                continue
+        else:
+            estado = EquipoEstado.DISPONIBLE.value
+
+        nombres_registrados.add(nombre_clave)
+        resultado.validas.append(
+            {
+                "nombre": nombre_normalizado,
                 "estado": estado,
             }
         )
