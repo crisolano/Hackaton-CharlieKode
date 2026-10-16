@@ -1,4 +1,0 @@
-/* Indicador de carga de HTMX: oculto salvo durante la petición */
-.htmx-indicator { display: none; }
-.htmx-request .htmx-indicator,
-.htmx-request.htmx-indicator { display: inline-block; }

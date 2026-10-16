@@ -13,7 +13,6 @@ venv/
 
 # Datos locales
 *.db
-*.sqlite
 *.sqlite3
 
 # Vercel

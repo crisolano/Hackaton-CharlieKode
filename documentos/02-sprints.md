@@ -3,8 +3,6 @@
 Tiempo total: 5 h = pre-sprint (15 min) + 3 sprints de 1 h 30 min + cierre (15 min).
 Arquitectura y stack: ver [01-arquitectura.md](01-arquitectura.md).
 
-Documentos de apoyo: [03-gitflow.md](03-gitflow.md) (ramas y PR) y [04-guia-desarrollo.md](04-guia-desarrollo.md) (puesta en marcha, valores permitidos, errores, ejemplos de contrato y Vercel).
-
 ## Roles
 | Dev | Rol | Carpetas propias |
 |---|---|---|

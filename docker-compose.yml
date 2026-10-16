@@ -3,9 +3,7 @@ services:
     build: .
     ports:
       - "8000:8000"
-    env_file:
-      - path: .env
-        required: false
+    env_file: .env
     environment:
       DATABASE_URL: sqlite:////data/campus.db
     volumes:
