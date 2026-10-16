@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.config import EquipoEstado
-from app.models import Equipo
+from app.models import Equipo, Prestamo
 
 
 def _equipo(db: Session, nombre: str = "Equipo de prueba", estado: EquipoEstado = None) -> Equipo:
@@ -22,6 +22,17 @@ def _prestamo(equipo_id: int, dias: int = 1) -> dict:
         "solicitante": "Solicitante de prueba",
         "fecha_devolucion": devolucion.isoformat(),
     }
+
+
+def _estado_equipo(client, equipo_id: int) -> str:
+    equipos = client.get("/api/equipos").json()["data"]
+    return next(e["estado"] for e in equipos if e["id"] == equipo_id)
+
+
+def _descartar_no_confirmado(db: Session) -> None:
+    """Tras esto solo se ve lo que el servicio confirmó con commit."""
+    db.rollback()
+    db.expire_all()
 
 
 # --- GET /api/equipos -------------------------------------------------------------------
@@ -62,18 +73,36 @@ def test_listar_equipos_con_estado_invalido_devuelve_422(client):
 # --- POST /api/prestamos ----------------------------------------------------------------
 
 
-def test_prestar_equipo_disponible(client, db: Session):
+def test_prestar_equipo_disponible_se_devuelve_y_se_guarda(client, db: Session):
     equipo = _equipo(db)
+    cuerpo = _prestamo(equipo.id)
 
-    response = client.post("/api/prestamos", json=_prestamo(equipo.id))
+    response = client.post("/api/prestamos", json=cuerpo)
 
     assert response.status_code == 201
     body = response.json()
     assert body["ok"] is True
-    assert body["data"]["equipo_id"] == equipo.id
-    assert body["data"]["devuelto_en"] is None
-    estado = client.get("/api/equipos").json()["data"][0]["estado"]
-    assert estado == "prestado"
+    data = body["data"]
+    assert data["equipo_id"] == equipo.id
+    assert data["solicitante"] == cuerpo["solicitante"]
+    assert data["fecha_devolucion"] == cuerpo["fecha_devolucion"]
+    assert data["devuelto_en"] is None
+    assert _estado_equipo(client, equipo.id) == "prestado"
+
+    _descartar_no_confirmado(db)
+    guardado = db.get(Prestamo, data["id"])
+    assert guardado is not None and guardado.devuelto_en is None
+    assert db.get(Equipo, equipo.id).estado == "prestado"
+
+
+def test_prestar_un_equipo_no_cambia_el_estado_de_otro(client, db: Session):
+    prestado = _equipo(db, "Prestado")
+    otro = _equipo(db, "Otro")
+
+    assert client.post("/api/prestamos", json=_prestamo(prestado.id)).status_code == 201
+
+    assert _estado_equipo(client, prestado.id) == "prestado"
+    assert _estado_equipo(client, otro.id) == "disponible"
 
 
 def test_prestar_equipo_ya_prestado_devuelve_409(client, db: Session):
@@ -147,7 +176,11 @@ def test_devolver_prestamo_deja_el_equipo_disponible(client, db: Session):
     body = response.json()
     assert body["ok"] is True
     assert body["data"]["devuelto_en"] is not None
-    assert client.get("/api/equipos").json()["data"][0]["estado"] == "disponible"
+    assert _estado_equipo(client, equipo.id) == "disponible"
+
+    _descartar_no_confirmado(db)
+    assert db.get(Prestamo, prestamo_id).devuelto_en is not None
+    assert db.get(Equipo, equipo.id).estado == "disponible"
 
 
 def test_equipo_devuelto_se_puede_volver_a_prestar(client, db: Session):

@@ -1,17 +1,14 @@
 import logging
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from app.ai.base import AIClient, AIError
 from app.ai.factory import ClienteIANoDisponible, get_ai_client_seguro
 from app.ai.providers.gemini import GeminiClient
 from app.ai.triage import clasificar_incidencia
 from app.api import deps
-from app.api.deps import ClienteIA, get_cliente_ia
+from app.api.deps import get_cliente_ia
 from app.core.config import IncidenciaEstado, IncidenciaRuta, settings
-from app.core.errors import setup_exception_handlers
 
 
 @pytest.fixture
@@ -84,21 +81,5 @@ def test_get_cliente_ia_cierra_el_cliente_al_terminar(monkeypatch):
     assert espia.cerrado is True
 
 
-def test_endpoint_sin_clave_responde_200_pendiente_y_no_500(sin_clave):
-    """Reproduce el fallo crítico de la revisión del plan: sin clave no puede haber un 500."""
-    app = FastAPI()
-    setup_exception_handlers(app)
-
-    @app.post("/triaje")
-    def triaje(cliente: ClienteIA):
-        resultado = clasificar_incidencia("La red del aula no funciona", cliente)
-        return {"ok": True, "data": resultado.model_dump(mode="json")}
-
-    response = TestClient(app, raise_server_exceptions=False).post("/triaje")
-
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert data["estado"] == "pendiente_revision"
-    assert data["ruta"] == "revision_manual"
-    assert data["categoria"] is None
-    assert data["origen_ia"] is False
+# El caso "sin clave no da 500" se prueba contra la app real en
+# tests/api/test_incidencias.py::test_sin_clave_de_ia_la_incidencia_queda_pendiente_y_no_da_500.
