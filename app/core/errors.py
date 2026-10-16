@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -5,6 +6,8 @@ from fastapi.exception_handlers import http_exception_handler as default_http_ex
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger(__name__)
 
 # Mensajes y textos centralizados (para facilitar cambios en la defensa)
 ERROR_MESSAGES = {
@@ -116,6 +119,13 @@ def setup_exception_handlers(app: FastAPI) -> None:
             codigo = "NO_ENCONTRADO"
         elif exc.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
             codigo = "ERROR_INTERNO"
+            logger.error(
+                "Error HTTP %s en %s %s",
+                exc.status_code,
+                request.method,
+                request.url.path,
+                exc_info=(type(exc), exc, exc.__traceback__),
+            )
         else:
             return await default_http_exception_handler(request, exc)
         mensaje = ERROR_MESSAGES[codigo]
@@ -127,6 +137,12 @@ def setup_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error(
+            "Error no controlado en %s %s",
+            request.method,
+            request.url.path,
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={

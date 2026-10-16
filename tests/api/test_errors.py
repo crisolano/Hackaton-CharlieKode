@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -119,6 +121,32 @@ def test_otros_errores_http_conservan_su_estado_y_no_se_etiquetan_como_datos_inv
     response = client.get("/solo-post")
     assert response.status_code == 405
     assert response.json().get("codigo") != "DATOS_INVALIDOS"
+
+
+def test_excepcion_no_controlada_se_registra_en_el_log_sin_filtrarse_a_la_respuesta(client, caplog):
+    with caplog.at_level(logging.ERROR, logger="app.core.errors"):
+        response = client.get("/boom")
+    assert "secreto" not in response.text
+    assert "GET /boom" in caplog.text
+    assert "RuntimeError" in caplog.text
+    assert "detalle interno secreto" in caplog.text
+
+
+def test_error_http_5xx_se_registra_en_el_log(client, caplog):
+    with caplog.at_level(logging.ERROR, logger="app.core.errors"):
+        client.get("/http503")
+    assert "503" in caplog.text
+    assert "/http503" in caplog.text
+
+
+def test_app_real_registra_los_handlers_de_error():
+    from app.main import app
+
+    response = TestClient(app).get("/ruta-que-no-existe")
+    assert response.status_code == 404
+    data = response.json()
+    assert data["ok"] is False
+    assert data["codigo"] == "NO_ENCONTRADO"
 
 
 def test_excepcion_no_controlada_no_expone_detalles(client):
