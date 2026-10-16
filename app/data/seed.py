@@ -114,7 +114,7 @@ def seed_equipos(
         )
         for r in resultado.rechazadas:
             logger.warning(
-                f"  [Fila {r['indice']}] {r['motivo']} | Contenido: {r['fila']}"
+                f"  [Fila {r['indice']}] {r['motivo']}"
             )
 
     equipos_a_insertar = [
