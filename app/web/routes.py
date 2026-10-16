@@ -7,10 +7,16 @@ from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.config import EquipoEstado, settings
 from app.core.database import get_db
 from app.core.errors import DatosInvalidos
-from app.schemas import ReservaCreate
+from app.schemas import PrestamoCreate, ReservaCreate
+from app.services.prestamos import (
+    crear_prestamo,
+    listar_equipos,
+    listar_prestamos,
+    registrar_devolucion,
+)
 from app.services.reservas import crear_reserva, listar_reservas, listar_salas
 
 WEB_DIR = Path(__file__).resolve().parent
@@ -30,6 +36,7 @@ class NavItem(NamedTuple):
 # Secciones de la navegación común; cada sprint agrega las suyas aquí (tupla inmutable).
 NAV_ITEMS: tuple[NavItem, ...] = (
     NavItem("Espacios", "/salas"),
+    NavItem("Equipos", "/equipos"),
     # Una línea por sección (Equipos, Incidencias...): evita conflictos de merge.
 )
 
@@ -86,4 +93,58 @@ def reservar(
     reserva = crear_reserva(db, datos)
     return render(
         request, "partials/reserva_ok.html", reserva=reserva, reservas=listar_reservas(db)
+    )
+
+
+def _contexto_equipos(db: Session) -> dict:
+    """Equipos con su préstamo activo (si lo hay) y los disponibles para el selector."""
+    prestamos_activos = {p.equipo_id: p for p in listar_prestamos(db, solo_activos=True)}
+    return {
+        "equipos": listar_equipos(db),
+        "disponibles": listar_equipos(db, estado=EquipoEstado.DISPONIBLE.value),
+        "prestamos_activos": prestamos_activos,
+    }
+
+
+@router.get("/equipos", response_class=HTMLResponse)
+def equipos(request: Request, db: Annotated[Session, Depends(get_db)]) -> HTMLResponse:
+    return render(request, "equipos.html", **_contexto_equipos(db))
+
+
+@router.post("/equipos/prestar", response_class=HTMLResponse)
+def prestar(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    equipo_id: Annotated[str, Form()] = "",
+    solicitante: Annotated[str, Form()] = "",
+    fecha_devolucion: Annotated[str, Form()] = "",
+) -> HTMLResponse:
+    """Registra el préstamo con el servicio (R3); los errores llegan al manejador HTMX."""
+    try:
+        datos = PrestamoCreate(
+            equipo_id=equipo_id, solicitante=solicitante, fecha_devolucion=fecha_devolucion
+        )
+    except ValidationError as exc:
+        raise DatosInvalidos(mensaje=_mensaje_validacion(exc)) from exc
+    prestamo = crear_prestamo(db, datos)
+    return render(
+        request,
+        "partials/prestamo_ok.html",
+        titulo="Préstamo registrado",
+        prestamo=prestamo,
+        **_contexto_equipos(db),
+    )
+
+
+@router.post("/equipos/prestamos/{prestamo_id}/devolucion", response_class=HTMLResponse)
+def devolver(
+    request: Request, prestamo_id: int, db: Annotated[Session, Depends(get_db)]
+) -> HTMLResponse:
+    prestamo = registrar_devolucion(db, prestamo_id)
+    return render(
+        request,
+        "partials/prestamo_ok.html",
+        titulo="Devolución registrada",
+        prestamo=prestamo,
+        **_contexto_equipos(db),
     )
