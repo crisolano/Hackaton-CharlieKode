@@ -48,7 +48,7 @@ def seed_salas(
         )
         for r in resultado.rechazadas:
             logger.warning(
-                f"  [Fila {r['indice']}] {r['motivo']} | Contenido: {r['fila']}"
+                f"  [Fila {r['indice']}] {r['motivo']}"
             )
 
     # Persistir las salas válidas
