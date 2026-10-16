@@ -143,7 +143,20 @@ class DatosInvalidos(AppException):
         )
 
 
+def _errores_serializables(errores: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Los validadores de Pydantic dejan la excepción original en `ctx`; se pasa a texto."""
+    limpios = []
+    for error in errores:
+        error = dict(error)
+        ctx = error.get("ctx")
+        if isinstance(ctx, dict):
+            error["ctx"] = {k: str(v) if isinstance(v, Exception) else v for k, v in ctx.items()}
+        limpios.append(error)
+    return limpios
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
+    from fastapi.encoders import jsonable_encoder
     from fastapi.exception_handlers import http_exception_handler as default_http_handler
     from fastapi.exceptions import RequestValidationError
     from fastapi.responses import JSONResponse
@@ -170,7 +183,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
                 "ok": False,
                 "codigo": "DATOS_INVALIDOS",
                 "mensaje": ERROR_MESSAGES["DATOS_INVALIDOS"],
-                "detalles": exc.errors(),
+                "detalles": jsonable_encoder(_errores_serializables(exc.errors())),
             },
         )
 
