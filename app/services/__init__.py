@@ -1,3 +1,9 @@
+from app.services.incidencias import (
+    actualizar_estado_incidencia,
+    crear_incidencia,
+    listar_incidencias,
+    obtener_incidencia,
+)
 from app.services.prestamos import (
     crear_prestamo,
     listar_equipos,
@@ -24,4 +30,8 @@ __all__ = [
     "listar_prestamos",
     "crear_prestamo",
     "registrar_devolucion",
+    "obtener_incidencia",
+    "listar_incidencias",
+    "crear_incidencia",
+    "actualizar_estado_incidencia",
 ]
