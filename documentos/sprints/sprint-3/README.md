@@ -12,3 +12,5 @@
 **Ramas:** inicio con `git pull origin develop`; features de estabilización → PR a `develop`. Al terminar, PR final `develop` → `main` (versión que se despliega y se defiende).
 
 **Congelar funcionalidades nuevas** a las 4:00; el resto del sprint es estabilizar.
+
+**Orden de los PR de este sprint:** identificadores `S3-PR1`, `S3-PR2`... en [05-orden-de-pull-requests.md](../../05-orden-de-pull-requests.md).

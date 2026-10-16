@@ -12,9 +12,10 @@ Campuslands crece rápido y sus procesos dependen de registros dispersos y revis
 ## Integrantes
 | Nombre | Rol |
 |---|---|
-| _Pendiente_ | Dev 1 — Datos y reglas |
-| _Pendiente_ | Dev 2 — API e IA |
-| _Pendiente_ | Dev 3 — Interfaz y entrega |
+| Miguel Acevedo | Dev 1 — Datos y reglas |
+| Juan Quintanilla | Dev 2 — API e IA |
+| Cristian Solano | Dev 3 — Interfaz y entrega |
+| Santiago Becerra | Responsable de los merges |
 
 ## Stack
 - **Backend:** Python 3.11+, FastAPI, Pydantic, SQLAlchemy.
@@ -53,12 +54,12 @@ No hace falta crear `.env`; las claves de IA se leen de él solo si existe (`cop
 ### En local
 1. **Crear y activar entorno virtual:**
    ```powershell
-   py -3.12 -m venv .venv
+   py -3.11 -m venv .venv
    .\.venv\Scripts\Activate.ps1
    ```
 2. **Instalar dependencias:**
    ```powershell
-   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
    ```
 3. **Variables de entorno:**
    ```powershell
