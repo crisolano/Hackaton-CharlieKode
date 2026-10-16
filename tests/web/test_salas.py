@@ -118,7 +118,7 @@ def test_responsable_se_escapa_en_la_respuesta(client, salas_de_prueba):
     assert "&lt;script&gt;" in r.text
 
 
-def test_formulario_funciona_sin_htmx_con_post_y_no_con_get(client, salas_de_prueba):
+def test_formulario_declara_post_como_respaldo_sin_htmx(client, salas_de_prueba):
     html = client.get("/salas").text
     assert 'method="post"' in html
     assert 'action="/salas/reservar"' in html
