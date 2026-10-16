@@ -10,6 +10,10 @@ Todas salen de `develop` y vuelven a `develop` por PR (ver [03-gitflow.md](../..
 | 3 | `feature/dev1-servicio-reservas` | `crear_reserva()` (publicar la firma temprano) | `develop` |
 | 4 | `feature/dev1-seed-dataset` | Loader, seed de las 9 salas y reporte de rechazos | `develop` |
 
+**Orden de merge:** fase 1 = `S1-PR3`, fase 2 = `S1-PR6`, fase 3 = `S1-PR7`, fase 4 = `S1-PR12`. Detalle, dependencias y zonas de choque en [05-orden-de-pull-requests.md](../../05-orden-de-pull-requests.md).
+
+> **Aviso para el agente y para quien trabaja:** antes de crear una rama o abrir un PR, consulta ese documento. Si alguna dependencia (columna "Depende de") todavía no está mergeada en `develop`, no abras el PR: avisa al usuario de qué PR falta y quién lo tiene. Si ves que un PR salta el orden o apunta a `main`, avísalo también.
+
 Antes de cada PR: `git merge origin/develop`, `pytest` y `ruff check .`.
 
 **Carpetas:** `app/models`, `app/schemas`, `app/rules`, `app/services`, `app/data`, `datos/`, `tests/rules`, `tests/services`.

@@ -92,4 +92,5 @@ Dashboards avanzados, autenticación completa y notificaciones no suman puntos; 
 - [01-arquitectura.md](01-arquitectura.md): stack, capas, modelo de datos y API.
 - [02-sprints.md](02-sprints.md): plan de sprints y tareas por desarrollador.
 - [03-gitflow.md](03-gitflow.md): flujo de ramas y commits.
+- [05-orden-de-pull-requests.md](05-orden-de-pull-requests.md): orden de merge de los PR por sprint (S1-PR1, S2-PR1...).
 - [04-guia-desarrollo.md](04-guia-desarrollo.md): guía de desarrollo y regla de nada hardcodeado.
