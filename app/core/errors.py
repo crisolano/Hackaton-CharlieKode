@@ -1,10 +1,27 @@
-from typing import Any
+from __future__ import annotations
 
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+import logging
+from typing import TYPE_CHECKING, Any
 
-# Mensajes y textos centralizados (para facilitar cambios en la defensa)
+# Este módulo lo importan las reglas y los servicios (capas puras): no debe cargar
+# FastAPI ni Starlette al importarse. Esos imports viven dentro de
+# setup_exception_handlers().
+if TYPE_CHECKING:
+    from fastapi import FastAPI, Request
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.responses import JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger(__name__)
+
+# Códigos HTTP del contrato (guía de desarrollo, sección 5)
+HTTP_BAD_REQUEST = 400
+HTTP_NOT_FOUND = 404
+HTTP_CONFLICT = 409
+HTTP_UNPROCESSABLE = 422
+HTTP_INTERNAL_ERROR = 500
+
+# Mensajes y plantillas centralizadas (para facilitar cambios en la defensa)
 ERROR_MESSAGES = {
     "AFORO_EXCEDIDO": "El aforo solicitado excede la capacidad máxima de la sala.",
     "SALA_OCUPADA": "La sala ya se encuentra reservada en el horario solicitado.",
@@ -12,7 +29,20 @@ ERROR_MESSAGES = {
     "NO_ENCONTRADO": "El recurso solicitado no fue encontrado.",
     "DATOS_INVALIDOS": "Los datos proporcionados no son válidos.",
     "ERROR_INTERNO": "Ocurrió un error interno en el servidor.",
+    "IA_NO_DISPONIBLE": (
+        "El servicio de IA no está disponible; la solicitud quedó pendiente de revisión manual."
+    ),
 }
+
+ERROR_TEMPLATES = {
+    "AFORO_EXCEDIDO": "La sala {sala} admite {aforo} personas y se pidieron {asistentes}.",
+    "SALA_OCUPADA": "La sala {sala} ya está reservada entre {inicio} y {fin}.",
+    "RECURSO_NO_DISPONIBLE": "El recurso {recurso} con id {id} no se encuentra disponible.",
+    "NO_ENCONTRADO": "No existe {recurso} con id {id}.",
+}
+
+MSG_ERROR_RANGO_HORARIO = "La fecha de inicio debe ser anterior a la fecha de fin."
+MSG_ERROR_TIMEZONE = "Las fechas de reserva deben ser en hora local sin zona horaria (naive)."
 
 
 class AppException(Exception):
@@ -20,7 +50,7 @@ class AppException(Exception):
         self,
         codigo: str,
         mensaje: str | None = None,
-        status_code: int = status.HTTP_400_BAD_REQUEST,
+        status_code: int = HTTP_BAD_REQUEST,
         detalles: Any = None,
     ):
         self.codigo = codigo
@@ -31,41 +61,77 @@ class AppException(Exception):
 
 
 class AforoExcedido(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        sala: str | None = None,
+        aforo: int | None = None,
+        asistentes: int | None = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and sala is not None and aforo is not None and asistentes is not None:
+            mensaje = ERROR_TEMPLATES["AFORO_EXCEDIDO"].format(
+                sala=sala, aforo=aforo, asistentes=asistentes
+            )
         super().__init__(
             codigo="AFORO_EXCEDIDO",
             mensaje=mensaje or ERROR_MESSAGES["AFORO_EXCEDIDO"],
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_UNPROCESSABLE,
             detalles=detalles,
         )
 
 
 class SalaOcupada(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        sala: str | None = None,
+        inicio: Any = None,
+        fin: Any = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and sala is not None and inicio is not None and fin is not None:
+            mensaje = ERROR_TEMPLATES["SALA_OCUPADA"].format(sala=sala, inicio=inicio, fin=fin)
         super().__init__(
             codigo="SALA_OCUPADA",
             mensaje=mensaje or ERROR_MESSAGES["SALA_OCUPADA"],
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=HTTP_CONFLICT,
             detalles=detalles,
         )
 
 
 class RecursoNoDisponible(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        recurso: str | None = None,
+        id: Any = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and recurso is not None and id is not None:
+            mensaje = ERROR_TEMPLATES["RECURSO_NO_DISPONIBLE"].format(recurso=recurso, id=id)
         super().__init__(
             codigo="RECURSO_NO_DISPONIBLE",
             mensaje=mensaje or ERROR_MESSAGES["RECURSO_NO_DISPONIBLE"],
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=HTTP_CONFLICT,
             detalles=detalles,
         )
 
 
 class NoEncontrado(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        recurso: str | None = None,
+        id: Any = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and recurso is not None and id is not None:
+            mensaje = ERROR_TEMPLATES["NO_ENCONTRADO"].format(recurso=recurso, id=id)
         super().__init__(
             codigo="NO_ENCONTRADO",
             mensaje=mensaje or ERROR_MESSAGES["NO_ENCONTRADO"],
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=HTTP_NOT_FOUND,
             detalles=detalles,
         )
 
@@ -75,12 +141,35 @@ class DatosInvalidos(AppException):
         super().__init__(
             codigo="DATOS_INVALIDOS",
             mensaje=mensaje or ERROR_MESSAGES["DATOS_INVALIDOS"],
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_UNPROCESSABLE,
             detalles=detalles,
         )
 
 
+def _errores_serializables(errores: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Los validadores de Pydantic dejan la excepción original en `ctx`; se pasa a texto.
+    Además, se excluye el campo `input` crudo para evitar la exposición de datos sensibles."""
+    limpios = []
+    for error in errores:
+        item = {
+            "type": error.get("type"),
+            "loc": error.get("loc"),
+            "msg": error.get("msg"),
+        }
+        ctx = error.get("ctx")
+        if isinstance(ctx, dict):
+            item["ctx"] = {k: str(v) if isinstance(v, Exception) else v for k, v in ctx.items()}
+        limpios.append(item)
+    return limpios
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
+    from fastapi.encoders import jsonable_encoder
+    from fastapi.exception_handlers import http_exception_handler as default_http_handler
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.responses import JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
     @app.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
         content = {
@@ -96,29 +185,49 @@ def setup_exception_handlers(app: FastAPI) -> None:
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        # Sanitiza detalles de validación: excluye 'input' crudo para no exponer datos sensibles
-        detalles = [
-            {
-                "loc": err.get("loc"),
-                "msg": err.get("msg"),
-                "type": err.get("type"),
-            }
-            for err in exc.errors()
-        ]
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_UNPROCESSABLE,
             content={
                 "ok": False,
                 "codigo": "DATOS_INVALIDOS",
                 "mensaje": ERROR_MESSAGES["DATOS_INVALIDOS"],
-                "detalles": detalles,
+                "detalles": jsonable_encoder(_errores_serializables(exc.errors())),
             },
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        # Solo 404 y 5xx tienen código propio en el contrato (guía, sección 5);
+        # el resto de errores HTTP conserva el comportamiento por defecto.
+        if exc.status_code == HTTP_NOT_FOUND:
+            codigo = "NO_ENCONTRADO"
+        elif exc.status_code >= HTTP_INTERNAL_ERROR:
+            codigo = "ERROR_INTERNO"
+            logger.error(
+                "Error HTTP %s en %s %s",
+                exc.status_code,
+                request.method,
+                request.url.path,
+                exc_info=(type(exc), exc, exc.__traceback__),
+            )
+        else:
+            return await default_http_handler(request, exc)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"ok": False, "codigo": codigo, "mensaje": ERROR_MESSAGES[codigo]},
+            headers=getattr(exc, "headers", None),
         )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error(
+            "Error no controlado en %s %s",
+            request.method,
+            request.url.path,
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=HTTP_INTERNAL_ERROR,
             content={
                 "ok": False,
                 "codigo": "ERROR_INTERNO",

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Espacios · {{ project_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Espacios</h1>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Salas</h2>
+  {% if salas %}
+  <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-100 text-left text-slate-600">
+        <tr><th class="px-4 py-2">Sala</th><th class="px-4 py-2">Aforo</th><th class="px-4 py-2">Estado</th></tr>
+      </thead>
+      <tbody>
+        {% for sala in salas %}
+        <tr class="border-t border-slate-100">
+          <td class="px-4 py-2">{{ sala.nombre }}</td>
+          <td class="px-4 py-2">{{ sala.aforo }}</td>
+          <td class="px-4 py-2">{{ sala.estado }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-slate-500">No hay salas registradas.</p>
+  {% endif %}
+</section>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Reservar una sala</h2>
+  <form method="post" action="/salas/reservar"
+        hx-post="/salas/reservar" hx-target="#resultado" hx-swap="innerHTML"
+        hx-indicator="#cargando"
+        class="grid gap-4 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2">
+    <label class="block text-sm">Sala
+      <select name="sala_id" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+        <option value="" disabled selected>Selecciona una sala</option>
+        {% for sala in salas %}
+        <option value="{{ sala.id }}">{{ sala.nombre }} (aforo {{ sala.aforo }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block text-sm">Asistentes
+      <input type="number" name="asistentes" required
+             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+    </label>
+    <label class="block text-sm">Inicio
+      <input type="datetime-local" name="inicio" required
+             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+    </label>
+    <label class="block text-sm">Fin
+      <input type="datetime-local" name="fin" required
+             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+    </label>
+    <label class="block text-sm sm:col-span-2">Responsable
+      <input type="text" name="responsable" required
+             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+    </label>
+    <div class="sm:col-span-2 flex items-center gap-3">
+      <button type="submit"
+              class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        Reservar
+      </button>
+      <span id="cargando" class="htmx-indicator text-sm text-slate-500" role="status">
+        Reservando…
+      </span>
+    </div>
+  </form>
+  <div id="resultado" class="mt-4" aria-live="polite"></div>
+</section>
+
+<section>
+  <h2 class="text-lg font-semibold mb-2">Reservas</h2>
+  {% include "partials/reservas_lista.html" %}
+</section>
+{% endblock %}
