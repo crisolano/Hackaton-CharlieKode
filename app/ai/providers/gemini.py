@@ -1,9 +1,12 @@
 import httpx
 
-from app.ai.base import AIClient, AIError
+from app.ai.base import AIError
+from app.ai.providers.http_base import HttpAIClient
 
 
-class GeminiClient(AIClient):
+class GeminiClient(HttpAIClient):
+    nombre = "Gemini"
+
     def __init__(
         self,
         api_key: str,
@@ -17,41 +20,18 @@ class GeminiClient(AIClient):
             raise AIError("Falta GEMINI_API_KEY en la configuración.")
         if not model:
             raise AIError("Falta GEMINI_MODEL en la configuración.")
-        if max_retries < 0:
-            raise AIError("AI_MAX_RETRIES no puede ser negativo.")
-        self._model = model
-        self._max_retries = max_retries
-        self._http = httpx.Client(
+        super().__init__(
             base_url=base_url,
-            timeout=timeout,
             headers={"x-goog-api-key": api_key},
+            timeout=timeout,
+            max_retries=max_retries,
             transport=transport,
         )
+        self._model = model
 
     def generate(self, prompt: str) -> str:
         body = {"contents": [{"parts": [{"text": prompt}]}]}
-        ultimo_error: Exception | None = None
-        for _ in range(self._max_retries + 1):
-            try:
-                response = self._http.post(f"/models/{self._model}:generateContent", json=body)
-                response.raise_for_status()
-                try:
-                    data = response.json()
-                except ValueError as exc:
-                    raise AIError("Gemini devolvió una respuesta que no es JSON.") from exc
-                return self._extraer_texto(data)
-            except (httpx.TimeoutException, httpx.TransportError) as exc:
-                ultimo_error = exc
-            except httpx.HTTPStatusError as exc:
-                if exc.response.status_code < 500 and exc.response.status_code != 429:
-                    raise AIError(
-                        f"Gemini rechazó la petición ({exc.response.status_code})."
-                    ) from exc
-                ultimo_error = exc
-        raise AIError("No se obtuvo respuesta de Gemini.") from ultimo_error
-
-    def close(self) -> None:
-        self._http.close()
+        return self._extraer_texto(self._post(f"/models/{self._model}:generateContent", body))
 
     @staticmethod
     def _extraer_texto(data: dict) -> str:

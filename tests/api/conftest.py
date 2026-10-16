@@ -27,3 +27,10 @@ def sala(db: Session) -> Sala:
     db.commit()
     db.refresh(sala)
     return sala
+
+
+@pytest.fixture(autouse=True)
+def _reiniciar_limitador():
+    from app.api.deps import limitador_incidencias
+
+    limitador_incidencias.reiniciar()

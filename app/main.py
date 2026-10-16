@@ -11,10 +11,15 @@ from app.web.routes import router as web_router
 
 setup_logging()
 
+EN_PRODUCCION = settings.APP_ENV == "production"
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Sistema Central de Gestión Operativa del Campus - Hackatón Campuslands",
     version="0.1.0",
+    docs_url=None if EN_PRODUCCION else "/docs",
+    redoc_url=None if EN_PRODUCCION else "/redoc",
+    openapi_url=None if EN_PRODUCCION else "/openapi.json",
 )
 
 # Configuración global de excepciones de dominio

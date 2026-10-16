@@ -16,9 +16,11 @@ logger = logging.getLogger(__name__)
 
 # Códigos HTTP del contrato (guía de desarrollo, sección 5)
 HTTP_BAD_REQUEST = 400
+HTTP_UNAUTHORIZED = 401
 HTTP_NOT_FOUND = 404
 HTTP_CONFLICT = 409
 HTTP_UNPROCESSABLE = 422
+HTTP_TOO_MANY_REQUESTS = 429
 HTTP_INTERNAL_ERROR = 500
 
 # Mensajes y plantillas centralizadas (para facilitar cambios en la defensa)
@@ -28,7 +30,12 @@ ERROR_MESSAGES = {
     "RECURSO_NO_DISPONIBLE": "El recurso solicitado se encuentra inhabilitado o no disponible.",
     "NO_ENCONTRADO": "El recurso solicitado no fue encontrado.",
     "DATOS_INVALIDOS": "Los datos proporcionados no son válidos.",
+    "NO_AUTORIZADO": "Falta la clave de API o no es válida.",
+    "DEMASIADAS_PETICIONES": "Demasiadas peticiones; intenta de nuevo en un minuto.",
     "ERROR_INTERNO": "Ocurrió un error interno en el servidor.",
+    "IA_NO_DISPONIBLE": (
+        "El servicio de IA no está disponible; la solicitud quedó pendiente de revisión manual."
+    ),
 }
 
 ERROR_TEMPLATES = {
@@ -148,6 +155,7 @@ def _errores_serializables(errores: list[dict[str, Any]]) -> list[dict[str, Any]
     limpios = []
     for error in errores:
         error = dict(error)
+        error.pop("input", None)  # no se devuelve al cliente lo que envió
         ctx = error.get("ctx")
         if isinstance(ctx, dict):
             error["ctx"] = {k: str(v) if isinstance(v, Exception) else v for k, v in ctx.items()}
