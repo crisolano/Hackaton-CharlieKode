@@ -96,13 +96,22 @@ def setup_exception_handlers(app: FastAPI) -> None:
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        # Sanitiza detalles de validación: excluye 'input' crudo para no exponer datos sensibles
+        detalles = [
+            {
+                "loc": err.get("loc"),
+                "msg": err.get("msg"),
+                "type": err.get("type"),
+            }
+            for err in exc.errors()
+        ]
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "ok": False,
                 "codigo": "DATOS_INVALIDOS",
                 "mensaje": ERROR_MESSAGES["DATOS_INVALIDOS"],
-                "detalles": exc.errors(),
+                "detalles": detalles,
             },
         )
 
