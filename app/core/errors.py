@@ -144,14 +144,19 @@ class DatosInvalidos(AppException):
 
 
 def _errores_serializables(errores: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Los validadores de Pydantic dejan la excepción original en `ctx`; se pasa a texto."""
+    """Los validadores de Pydantic dejan la excepción original en `ctx`; se pasa a texto.
+    Además, se excluye el campo `input` crudo para evitar la exposición de datos sensibles."""
     limpios = []
     for error in errores:
-        error = dict(error)
+        item = {
+            "type": error.get("type"),
+            "loc": error.get("loc"),
+            "msg": error.get("msg"),
+        }
         ctx = error.get("ctx")
         if isinstance(ctx, dict):
-            error["ctx"] = {k: str(v) if isinstance(v, Exception) else v for k, v in ctx.items()}
-        limpios.append(error)
+            item["ctx"] = {k: str(v) if isinstance(v, Exception) else v for k, v in ctx.items()}
+        limpios.append(item)
     return limpios
 
 
