@@ -1,3 +1,5 @@
+from typing import Any
+
 import httpx
 
 from app.ai.base import AIError
@@ -15,7 +17,9 @@ class GeminiClient(HttpAIClient):
         timeout: float,
         max_retries: int,
         transport: httpx.BaseTransport | None = None,
+        **opciones: Any,
     ):
+        """`opciones`: backoff, tiempo_total, dormir y reloj de HttpAIClient."""
         if not api_key:
             raise AIError("Falta GEMINI_API_KEY en la configuración.")
         if not model:
@@ -26,6 +30,7 @@ class GeminiClient(HttpAIClient):
             timeout=timeout,
             max_retries=max_retries,
             transport=transport,
+            **opciones,
         )
         self._model = model
 
