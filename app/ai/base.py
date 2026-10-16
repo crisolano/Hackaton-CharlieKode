@@ -5,13 +5,12 @@ from typing import Self
 class AIError(Exception):
     """Fallo al consultar al proveedor de IA (configuración, red, timeout o salida vacía).
 
-    `reintentable` indica si tiene sentido volver a intentar o pasar a otro proveedor
-    (timeout, red, 5xx, 429); `codigo_http` guarda el estado devuelto, si lo hubo.
+    `codigo_http` guarda el estado devuelto por el proveedor, si lo hubo, para el log.
+    Regla: el mensaje nunca incluye la clave, el prompt ni el cuerpo de la respuesta.
     """
 
-    def __init__(self, mensaje: str, *, reintentable: bool = False, codigo_http: int | None = None):
+    def __init__(self, mensaje: str, *, codigo_http: int | None = None):
         super().__init__(mensaje)
-        self.reintentable = reintentable
         self.codigo_http = codigo_http
 
 

@@ -1,4 +1,5 @@
-from typing import Any
+import time
+from collections.abc import Callable
 
 import httpx
 
@@ -19,9 +20,12 @@ class GroqClient(HttpAIClient):
         timeout: float,
         max_retries: int,
         transport: httpx.BaseTransport | None = None,
-        **opciones: Any,
+        *,
+        backoff: float = 0.0,
+        tiempo_total: float | None = None,
+        dormir: Callable[[float], None] = time.sleep,
+        reloj: Callable[[], float] = time.monotonic,
     ):
-        """`opciones`: backoff, tiempo_total, dormir y reloj de HttpAIClient."""
         if not api_key:
             raise AIError("Falta GROQ_API_KEY en la configuración.")
         if not model:
@@ -32,7 +36,10 @@ class GroqClient(HttpAIClient):
             timeout=timeout,
             max_retries=max_retries,
             transport=transport,
-            **opciones,
+            backoff=backoff,
+            tiempo_total=tiempo_total,
+            dormir=dormir,
+            reloj=reloj,
         )
         self._model = model
 
