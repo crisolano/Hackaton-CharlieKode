@@ -1,12 +1,80 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="text-2xl font-semibold mb-2">{{ project_name }}</h1>
-<p class="text-slate-600 mb-6">Hackatón Campuslands — gestión de espacios, equipos e incidencias.</p>
-<div class="grid gap-4 sm:grid-cols-3">
-  {% for item in nav_items %}
-  <a href="{{ item.href }}" class="block rounded-lg border border-slate-200 bg-white p-4 hover:border-indigo-400">
-    {{ item.label }}
-  </a>
-  {% endfor %}
-</div>
+<header class="hero mb-10">
+  <div>
+    <p class="eyebrow entra" style="--i:0">Hackatón Campuslands</p>
+    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight mt-1 entra" style="--i:1">{{ project_name }}</h1>
+    <p class="lead mt-3 entra" style="--i:2">Hoy puedes reservar salas. Equipos e incidencias llegan pronto.</p>
+    <div class="flex flex-wrap gap-3 mt-6 entra" style="--i:3">
+      <a href="/salas#reservar" class="btn btn-primary w-full sm:w-auto">Reservar una sala</a>
+      <a href="/salas#disponibilidad" class="btn btn-secondary w-full sm:w-auto">Ver disponibilidad</a>
+    </div>
+  </div>
+  <div class="hero-logo-wrap entra" style="--i:2">
+    <span class="hero-orbita" aria-hidden="true"></span>
+    <img src="{{ estatico('campuslands-logo-transparente.png') }}"
+         alt="Logo de Campuslands: casco de astronauta y el lema #HackeandoVidas"
+         class="hero-logo" width="166" height="200">
+  </div>
+</header>
+
+{% if bd_error %}
+<div class="mb-8">{% include "partials/aviso_bd.html" %}</div>
+{% elif resumen %}
+<section aria-labelledby="titulo-estado" class="mb-10">
+  <h2 id="titulo-estado" class="text-xl font-semibold mb-3 entra" style="--i:4">Estado de las salas</h2>
+  {% if resumen.total_salas == 0 %}
+  <div class="alert alert-info" role="status">
+    <div>
+      <p class="alert-title">Todavía no hay salas registradas.</p>
+      <p>Cuando el equipo cargue las salas del campus, aquí verás cuántas hay y cuáles están habilitadas.</p>
+      <details class="tecnico">
+        <summary>Para el equipo técnico</summary>
+        <p>Carga las salas con <code>python -m app.data.seed</code> y recarga la página.</p>
+      </details>
+    </div>
+  </div>
+  {% else %}
+  <dl class="grid gap-4 sm:grid-cols-3">
+    <div class="card stat entra" style="--i:5"><dt class="muted text-sm">Salas registradas</dt><dd class="text-3xl font-bold">{{ resumen.total_salas }}</dd></div>
+    <div class="card stat entra" style="--i:6"><dt class="muted text-sm">Salas habilitadas</dt><dd class="text-3xl font-bold">{{ resumen.salas_activas }}</dd></div>
+    <div class="card stat entra" style="--i:7"><dt class="muted text-sm">Reservas próximas</dt><dd class="text-3xl font-bold">{{ resumen.reservas_pendientes }}</dd></div>
+  </dl>
+  {% endif %}
+</section>
+{% endif %}
+
+<section aria-labelledby="titulo-modulos" class="mb-10">
+  <h2 id="titulo-modulos" class="text-xl font-semibold mb-3 entra" style="--i:8">Módulos</h2>
+  <ul class="grid gap-4 sm:grid-cols-3" role="list">
+    {% for item in nav_items %}
+    <li class="card card-interactive flex flex-col gap-2 entra" style="--i:{{ 8 + loop.index }}">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-lg font-semibold">{{ item.label }}</h3>
+        <span class="badge badge-ok">Disponible</span>
+      </div>
+      <p class="muted text-sm">{{ item.descripcion }}</p>
+      <a href="{{ item.href }}" class="btn btn-secondary mt-auto">Ir a {{ item.label }}</a>
+    </li>
+    {% endfor %}
+    {% for seccion in secciones_pendientes %}
+    <li class="card card-muted flex flex-col gap-2 entra" style="--i:{{ 8 + nav_items|length + loop.index }}">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-lg font-semibold">{{ seccion.label }}</h3>
+        <span class="badge badge-soon">Próximamente</span>
+      </div>
+      <p class="muted text-sm">{{ seccion.descripcion }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section aria-labelledby="titulo-pasos">
+  <h2 id="titulo-pasos" class="text-xl font-semibold mb-3 entra" style="--i:8">Cómo reservar una sala</h2>
+  <ol class="grid gap-4 sm:grid-cols-3">
+    <li class="card entra" style="--i:9"><p class="eyebrow">Paso 1</p><p class="font-semibold">Elige la sala</p><p class="muted text-sm">Revisa su aforo y si está libre en este momento.</p></li>
+    <li class="card entra" style="--i:10"><p class="eyebrow">Paso 2</p><p class="font-semibold">Indica horario y asistentes</p><p class="muted text-sm">El sistema valida el aforo y que no se cruce con otra reserva.</p></li>
+    <li class="card entra" style="--i:11"><p class="eyebrow">Paso 3</p><p class="font-semibold">Confirma</p><p class="muted text-sm">Verás la confirmación o el motivo exacto si no se puede reservar.</p></li>
+  </ol>
+</section>
 {% endblock %}

@@ -1,77 +1,103 @@
 {% extends "base.html" %}
-{% block title %}Espacios · {{ project_name }}{% endblock %}
+{% block title %}Reserva de salas · {{ project_name }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-semibold mb-4">Espacios</h1>
+<header class="mb-8">
+  <p class="eyebrow entra" style="--i:0">Espacios</p>
+  <h1 class="text-3xl font-bold tracking-tight mt-1 entra" style="--i:1">Reserva de salas</h1>
+  <p class="lead mt-2 entra" style="--i:2">Consulta qué salas están libres y reserva en pocos pasos. El sistema comprueba por ti el aforo y que el horario no se cruce con otra reserva.</p>
+</header>
 
-<section class="mb-8">
-  <h2 class="text-lg font-semibold mb-2">Salas</h2>
-  {% if salas %}
-  <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-    <table class="min-w-full text-sm">
-      <thead class="bg-slate-100 text-left text-slate-600">
-        <tr><th class="px-4 py-2">Sala</th><th class="px-4 py-2">Aforo</th><th class="px-4 py-2">Estado</th></tr>
-      </thead>
-      <tbody>
-        {% for sala in salas %}
-        <tr class="border-t border-slate-100">
-          <td class="px-4 py-2">{{ sala.nombre }}</td>
-          <td class="px-4 py-2">{{ sala.aforo }}</td>
-          <td class="px-4 py-2">{{ sala.estado }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="text-slate-500">No hay salas registradas.</p>
-  {% endif %}
+{% if bd_error %}
+<div class="mb-8">{% include "partials/aviso_bd.html" %}</div>
+{% endif %}
+
+<section id="disponibilidad" aria-labelledby="titulo-disponibilidad" class="mb-10">
+  <h2 id="titulo-disponibilidad" class="text-xl font-semibold mb-3 entra" style="--i:3">Disponibilidad de salas</h2>
+  {% include "partials/salas_tarjetas.html" %}
 </section>
 
-<section class="mb-8">
-  <h2 class="text-lg font-semibold mb-2">Reservar una sala</h2>
-  <form method="post" action="/salas/reservar"
-        hx-post="/salas/reservar" hx-target="#resultado" hx-swap="innerHTML"
-        hx-indicator="#cargando"
-        class="grid gap-4 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2">
-    <label class="block text-sm">Sala
-      <select name="sala_id" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
-        <option value="" disabled selected>Selecciona una sala</option>
-        {% for sala in salas %}
-        <option value="{{ sala.id }}">{{ sala.nombre }} (aforo {{ sala.aforo }})</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label class="block text-sm">Asistentes
-      <input type="number" name="asistentes" required
-             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
-    </label>
-    <label class="block text-sm">Inicio
-      <input type="datetime-local" name="inicio" required
-             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
-    </label>
-    <label class="block text-sm">Fin
-      <input type="datetime-local" name="fin" required
-             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
-    </label>
-    <label class="block text-sm sm:col-span-2">Responsable
-      <input type="text" name="responsable" required
-             class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
-    </label>
-    <div class="sm:col-span-2 flex items-center gap-3">
-      <button type="submit"
-              class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-        Reservar
-      </button>
-      <span id="cargando" class="htmx-indicator text-sm text-slate-500" role="status">
-        Reservando…
-      </span>
+<section id="reservar" aria-labelledby="titulo-reservar" class="mb-10 scroll-mt-4">
+  <h2 id="titulo-reservar" class="text-xl font-semibold mb-3 entra" style="--i:4">Reservar una sala</h2>
+  <div class="layout-reserva">
+    <div class="card">
+      <form id="form-reserva" method="post" action="/salas/reservar"
+            hx-post="/salas/reservar" hx-target="#resultado" hx-swap="innerHTML"
+            hx-indicator="#cargando" hx-disabled-elt="#btn-reservar"
+            data-mensaje-carga="Reservando tu sala…" data-limpiar-al-exito
+            class="grid gap-6">
+        <p class="muted text-sm">Todos los campos son obligatorios.</p>
+
+        <fieldset class="group">
+          <legend class="group-title">1. ¿Qué sala y para cuántas personas?</legend>
+          <div class="form-grid">
+            <div>
+              <label for="sala_id" class="field-label">Sala</label>
+              <select id="sala_id" name="sala_id" required class="field" aria-describedby="ayuda-aforo">
+                <option value="" disabled selected>Selecciona una sala</option>
+                {% for v in salas_vista %}
+                <option value="{{ v.sala.id }}" data-aforo="{{ v.sala.aforo }}"{% if not v.activa %} disabled{% endif %}>
+                  {{ v.sala.nombre }} — aforo {{ v.sala.aforo }}{% if not v.activa %} (inhabilitada){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+              <p id="ayuda-aforo" class="hint" aria-live="polite">Elige una sala para ver su aforo máximo.</p>
+            </div>
+            <div>
+              <label for="asistentes" class="field-label">Número de asistentes</label>
+              <input id="asistentes" name="asistentes" type="number" inputmode="numeric" min="1" step="1" required class="field" aria-describedby="ayuda-asistentes">
+              <p id="ayuda-asistentes" class="hint">De 1 hasta el aforo de la sala.</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group-title">2. ¿Cuándo?</legend>
+          <div class="form-grid">
+            <div>
+              <label for="inicio" class="field-label">Inicio</label>
+              <input id="inicio" name="inicio" type="datetime-local" required class="field" aria-describedby="ayuda-hora">
+            </div>
+            <div>
+              <label for="fin" class="field-label">Fin</label>
+              <input id="fin" name="fin" type="datetime-local" required class="field" aria-describedby="ayuda-hora">
+            </div>
+          </div>
+          <p id="ayuda-hora" class="hint">Hora local del campus. El fin debe ser posterior al inicio.</p>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group-title">3. ¿Quién responde por la reserva?</legend>
+          <label for="responsable" class="field-label">Responsable</label>
+          <input id="responsable" name="responsable" type="text" required autocomplete="name" class="field">
+        </fieldset>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="btn-reservar" type="submit" class="btn btn-primary w-full sm:w-auto">
+            <span class="htmx-indicator" id="cargando" aria-hidden="true"><span class="spinner"></span></span>
+            <span class="btn-reposo">Confirmar reserva</span>
+            <span class="btn-ocupado">Reservando…</span>
+          </button>
+        </div>
+      </form>
+
+      <div id="resultado" class="mt-4"
+           data-error-generico="{{ mensaje_error_generico }}"
+           data-error-red="No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo."></div>
     </div>
-  </form>
-  <div id="resultado" class="mt-4" aria-live="polite"></div>
+
+    <aside class="card h-fit" aria-labelledby="titulo-reglas">
+      <h3 id="titulo-reglas" class="font-semibold mb-2">Qué revisamos antes de confirmar</h3>
+      <ul class="list-disc pl-5 grid gap-2 text-sm muted">
+        <li>Los asistentes no pueden superar el aforo de la sala.</li>
+        <li>La sala no puede tener otra reserva en el mismo horario. Una reserva que empieza justo cuando termina otra sí es válida.</li>
+        <li>La hora de inicio debe ser anterior a la de fin.</li>
+      </ul>
+    </aside>
+  </div>
 </section>
 
-<section>
-  <h2 class="text-lg font-semibold mb-2">Reservas</h2>
+<section aria-labelledby="titulo-reservas">
+  <h2 id="titulo-reservas" class="text-xl font-semibold mb-3 entra" style="--i:5">Reservas registradas</h2>
   {% include "partials/reservas_lista.html" %}
 </section>
 {% endblock %}

@@ -1,8 +1,17 @@
-<div class="rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800" role="status">
-  <p class="font-semibold">Reserva creada</p>
-  <p>
-    {{ reserva.sala.nombre }} · {{ reserva.inicio|fecha_hora }} – {{ reserva.fin|fecha_hora }}
-    · {{ reserva.asistentes }} asistentes · {{ reserva.responsable }}
-  </p>
+<div class="alert alert-ok" role="status">
+  <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="check" pathLength="1" d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+  <div>
+    <p class="alert-title">¡Reserva confirmada!</p>
+    <p class="text-sm">Ya aparece en la lista de reservas.</p>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm mt-1">
+      <dt class="font-semibold">Sala</dt><dd>{{ reserva.sala.nombre }}</dd>
+      <dt class="font-semibold">Horario</dt><dd>{{ reserva.inicio|fecha_hora }} a {{ reserva.fin|fecha_hora }}</dd>
+      <dt class="font-semibold">Asistentes</dt><dd>{{ reserva.asistentes }}</dd>
+      <dt class="font-semibold">Responsable</dt><dd>{{ reserva.responsable }}</dd>
+    </dl>
+  </div>
 </div>
-{% with oob=true %}{% include "partials/reservas_lista.html" %}{% endwith %}
+{% with oob=true %}
+{% include "partials/reservas_lista.html" %}
+{% include "partials/salas_tarjetas.html" %}
+{% endwith %}
