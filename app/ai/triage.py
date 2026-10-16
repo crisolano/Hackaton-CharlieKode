@@ -54,3 +54,8 @@ def clasificar_incidencia(texto: str, client: AIClient) -> ResultadoTriaje:
         estado=IncidenciaEstado.CLASIFICADA,
         origen_ia=True,
     )
+
+
+def triar_incidencia(texto: str, ai_client: AIClient) -> ResultadoTriaje:
+    """Punto de entrada que usa services.incidencias.crear_incidencia() (Dev 1)."""
+    return clasificar_incidencia(texto, ai_client)
