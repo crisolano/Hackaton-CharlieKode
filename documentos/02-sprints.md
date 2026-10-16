@@ -23,7 +23,8 @@ Compartido (se acuerda y va en commit aparte): `app/main.py`, `app/core/`, `requ
 
 ## Reglas de trabajo
 - Cada dev edita solo sus carpetas; los cambios al contrato se acuerdan y van en un commit aparte.
-- Una rama por dev (`dev1/...`, `dev2/...`, `dev3/...`) y merge a `main` al final de cada sprint.
+- Gitflow: ramas `feature/<dev>-<tema>` desde `develop`, PR a `develop`, y `develop` → `main` al final de cada sprint. Detalle en [03-gitflow.md](03-gitflow.md).
+- Antes de cada PR, actualizar la feature con `develop` y resolver los choques en tu rama.
 - Commits pequeños y frecuentes: el historial de Git se evalúa.
 - `ruff check .` y `pytest` limpios antes de cada merge.
 

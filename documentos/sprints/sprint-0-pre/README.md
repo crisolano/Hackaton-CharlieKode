@@ -8,5 +8,6 @@
 - [ ] `app/core/config.py` (lee `.env`) y `app/core/database.py` (engine y sesión desde `DATABASE_URL`).
 - [ ] `app/core/errors.py`: excepciones de dominio y códigos (`AFORO_EXCEDIDO`, `SALA_OCUPADA`, `RECURSO_NO_DISPONIBLE`).
 - [ ] Acordar modelo de datos y contrato de API ([01-arquitectura.md](../../01-arquitectura.md), secciones 6 y 8).
-- [ ] Crear las ramas `dev1/...`, `dev2/...`, `dev3/...` y hacer el primer commit en `main`.
+- [ ] Crear la rama `develop` desde `main` y publicarla; proteger `main` y `develop` (ver [03-gitflow.md](../../03-gitflow.md)).
+- [ ] Cada dev crea su primera rama `feature/<dev>-<tema>` desde `develop`.
 - [ ] Revisar el dataset oficial apenas llegue y guardarlo en `datos/`.
