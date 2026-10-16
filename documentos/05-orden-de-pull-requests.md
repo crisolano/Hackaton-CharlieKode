@@ -40,8 +40,8 @@ Documentos: [Dev 1](sprints/sprint-1/dev1-datos-reglas.md) · [Dev 2](sprints/sp
 | S1-PR9 | Dev 3 · extra | `feature/dev3-htmx-errores` · [#9](https://github.com/crisolano/Hackaton-CharlieKode/pull/9) | S1-PR5, S1-PR8 | `app/main.py`, `base.html` |
 | S1-PR10 | Dev 2 · fase 3 | `feature/dev2-conexion-gemini` · [#8](https://github.com/crisolano/Hackaton-CharlieKode/pull/8) | S1-PR5 | `app/ai`, `app/core/config.py` |
 | S1-PR11 | Dev 3 · extra | `feature/dev3-docker-hardening` · [#3](https://github.com/crisolano/Hackaton-CharlieKode/pull/3) | S1-PR2 | `Dockerfile`, `docker-compose.yml` |
-| S1-PR12 | Dev 1 · fase 4 | `feature/dev1-seed-dataset` (por crear) | S1-PR3 | `app/data`, `datos/` |
-| S1-PR13 | Dev 2 · fase 2 | `feature/dev2-router-salas-reservas` (por crear) | S1-PR5, S1-PR7 | `app/api`, `app/main.py` |
+| S1-PR12 | Dev 1 · fase 4 | `feature/dev1-seed-dataset` · [#16](https://github.com/crisolano/Hackaton-CharlieKode/pull/16) | S1-PR3 | `app/data`, `datos/` |
+| S1-PR13 | Dev 2 · fase 2 | `feature/dev2-router-salas-reservas` · [#14](https://github.com/crisolano/Hackaton-CharlieKode/pull/14) (mergeado) | S1-PR5, S1-PR7 | `app/api`, `app/main.py` |
 | S1-PR14 | Dev 3 · fase 2 | `feature/dev3-pagina-salas-reserva` (por crear) | S1-PR7, S1-PR9, S1-PR12 | `app/web/routes.py` (`NAV_ITEMS`), `app/main.py` |
 
 **Cierre del sprint:** los tres revisan `develop` y se hace el PR `develop` → `main`.
