@@ -43,6 +43,9 @@ Verificación rápida antes de cada PR: buscar en el diff claves, literales de s
 | `GROQ_BASE_URL` | `https://api.groq.com/openai/v1` | URL base de la API de Groq (compatible con OpenAI) |
 | `AI_TIMEOUT_SECONDS` | `10` | Timeout por llamada a la IA |
 | `AI_MAX_RETRIES` | `1` | Reintentos acotados |
+| `AI_FALLBACK_PROVIDER` | `groq` (vacío = sin respaldo) | Proveedor que se usa si el principal falla (saturación, cuota, timeout) |
+| `AI_BACKOFF_SECONDS` | `0.5` | Espera base entre reintentos; se duplica en cada intento y manda el `Retry-After` del proveedor |
+| `AI_TOTAL_TIMEOUT_SECONDS` | `20` | Tope de tiempo por proveedor sumando intentos y esperas |
 
 Toda variable nueva se agrega a `.env.example` (sin valor real) y a `core/config.py`.
 
