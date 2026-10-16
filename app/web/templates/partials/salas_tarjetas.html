@@ -1,0 +1,40 @@
+<div id="salas-disponibilidad"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% if salas_vista %}
+  <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list">
+    {% for v in salas_vista %}
+    <li class="card card-interactive flex flex-col gap-2">
+      <div class="flex items-start justify-between gap-2">
+        <h3 class="text-lg font-semibold leading-tight">{{ v.sala.nombre }}</h3>
+        {% if not v.activa %}
+        <span class="badge badge-off">Inhabilitada</span>
+        {% elif v.ocupada_ahora %}
+        <span class="badge badge-busy"><span class="dot" aria-hidden="true"></span>Ocupada hasta {{ v.ocupada_hasta|hora }}</span>
+        {% else %}
+        <span class="badge badge-ok"><span class="dot" aria-hidden="true"></span>{% if v.libre_hasta %}Libre hasta {{ v.libre_hasta|hora }}{% else %}Libre ahora{% endif %}</span>
+        {% endif %}
+      </div>
+      <p class="muted">Aforo: hasta <strong>{{ v.sala.aforo }}</strong> personas</p>
+      <p class="muted text-sm">
+        {% if v.proxima %}
+        Próxima reserva: {{ v.proxima.inicio|fecha_hora }}
+        {% else %}
+        Sin reservas próximas
+        {% endif %}
+      </p>
+      {% if v.activa %}
+      <a href="#reservar" data-elegir-sala="{{ v.sala.id }}" class="btn btn-secondary mt-auto">
+        Reservar {{ v.sala.nombre }}
+      </a>
+      {% else %}
+      <p class="text-sm muted mt-auto">Esta sala no admite reservas por ahora.</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="card card-muted">
+    <p class="font-semibold">Todavía no hay salas registradas.</p>
+    <p class="muted">Cuando se carguen las salas del campus aparecerán aquí con su aforo y disponibilidad.</p>
+  </div>
+  {% endif %}
+</div>

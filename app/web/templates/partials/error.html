@@ -1,4 +1,15 @@
-<div class="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800" role="alert">
-  <p class="font-semibold">{{ codigo }}</p>
-  <p>{{ mensaje }}</p>
+{% set titulos = {
+  "AFORO_EXCEDIDO": "Demasiadas personas para esta sala",
+  "SALA_OCUPADA": "Esa sala ya está reservada",
+  "DATOS_INVALIDOS": "Revisa el formulario",
+  "NO_ENCONTRADO": "No encontramos esa sala",
+  "RECURSO_NO_DISPONIBLE": "Sala no disponible",
+  "ERROR_INTERNO": "Algo salió mal",
+} %}
+<div class="alert alert-error" role="alert" data-codigo="{{ codigo }}"{% if campos %} data-campo="{{ campos|join(' ') }}"{% endif %}>
+  <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5m0 3h.01"/></svg>
+  <div>
+    <p class="alert-title">{{ titulos.get(codigo, "No se pudo completar la acción") }}</p>
+    <p>{{ mensaje }}</p>
+  </div>
 </div>

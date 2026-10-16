@@ -47,3 +47,36 @@ def test_validacion_sin_htmx_sigue_siendo_json():
     r = client.get("/validar?n=x")
     assert r.status_code == 422
     assert r.json()["codigo"] == "DATOS_INVALIDOS"
+
+
+def _html_parcial(codigo):
+    from starlette.requests import Request
+
+    from app.web.errors import _parcial_error
+
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    return _parcial_error(request, codigo, "Mensaje", 400).body.decode()
+
+
+def test_parcial_de_error_muestra_titulo_por_codigo_y_oculta_el_codigo():
+    r = client.get("/ocupada", headers=HTMX)
+    assert "Esa sala ya está reservada" in r.text
+    assert 'data-codigo="SALA_OCUPADA"' in r.text
+    assert "Código:" not in r.text
+
+
+def test_codigo_desconocido_usa_el_titulo_por_defecto():
+    assert "No se pudo completar la acción" in _html_parcial("OTRO_CODIGO")
+
+
+def test_titulos_de_todos_los_codigos_del_contrato():
+    esperados = {
+        "AFORO_EXCEDIDO": "Demasiadas personas para esta sala",
+        "SALA_OCUPADA": "Esa sala ya está reservada",
+        "DATOS_INVALIDOS": "Revisa el formulario",
+        "NO_ENCONTRADO": "No encontramos esa sala",
+        "RECURSO_NO_DISPONIBLE": "Sala no disponible",
+        "ERROR_INTERNO": "Algo salió mal",
+    }
+    for codigo, titulo in esperados.items():
+        assert titulo in _html_parcial(codigo)

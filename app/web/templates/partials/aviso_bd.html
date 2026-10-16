@@ -1,0 +1,11 @@
+<div class="alert alert-warn" role="alert">
+  <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+  <div>
+    <p class="alert-title">No pudimos cargar la información del campus</p>
+    <p>Por ahora no podemos mostrar las salas ni las reservas. Inténtalo de nuevo en unos minutos; si el problema sigue, avisa al equipo técnico.</p>
+    <details class="tecnico">
+      <summary>Para el equipo técnico</summary>
+      <p>Es probable que todavía no se hayan creado las tablas ni cargado las salas. Ejecuta <code>python -m app.data.seed</code> (con Docker: <code>docker compose exec web python -m app.data.seed</code>) y recarga la página.</p>
+    </details>
+  </div>
+</div>

@@ -12,11 +12,17 @@ def es_peticion_htmx(request: Request) -> bool:
     return request.headers.get(HTMX_HEADER) == "true"
 
 
-def _parcial_error(request: Request, codigo: str, mensaje: str, status_code: int) -> Response:
+def _parcial_error(
+    request: Request,
+    codigo: str,
+    mensaje: str,
+    status_code: int,
+    campos: tuple[str, ...] = (),
+) -> Response:
     return templates.TemplateResponse(
         request,
         "partials/error.html",
-        {"codigo": codigo, "mensaje": mensaje},
+        {"codigo": codigo, "mensaje": mensaje, "campos": campos},
         status_code=status_code,
     )
 
@@ -28,7 +34,8 @@ def setup_htmx_error_handlers(app: FastAPI) -> None:
 
     async def app_exception_handler(request: Request, exc: AppException) -> Response:
         if es_peticion_htmx(request):
-            return _parcial_error(request, exc.codigo, exc.mensaje, exc.status_code)
+            campos = getattr(exc, "campos", ())
+            return _parcial_error(request, exc.codigo, exc.mensaje, exc.status_code, campos)
         return await json_app_handler(request, exc)
 
     async def validation_handler(request: Request, exc: RequestValidationError) -> Response:

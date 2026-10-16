@@ -1,28 +1,37 @@
 <div id="reservas"{% if oob %} hx-swap-oob="true"{% endif %}>
-  {% if reservas %}
-  <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-    <table class="min-w-full text-sm">
-      <thead class="bg-slate-100 text-left text-slate-600">
+  {% if reservas_vista %}
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Tabla de reservas">
+    <table class="table">
+      <caption class="sr-only">Reservas registradas, ordenadas por fecha de inicio</caption>
+      <thead>
         <tr>
-          <th class="px-4 py-2">Sala</th><th class="px-4 py-2">Inicio</th>
-          <th class="px-4 py-2">Fin</th><th class="px-4 py-2">Asistentes</th>
-          <th class="px-4 py-2">Responsable</th>
+          <th scope="col">Sala</th>
+          <th scope="col">Inicio</th>
+          <th scope="col">Fin</th>
+          <th scope="col">Asistentes</th>
+          <th scope="col">Responsable</th>
+          <th scope="col">Estado</th>
         </tr>
       </thead>
       <tbody>
-        {% for r in reservas %}
-        <tr class="border-t border-slate-100">
-          <td class="px-4 py-2">{{ r.sala.nombre }}</td>
-          <td class="px-4 py-2">{{ r.inicio|fecha_hora }}</td>
-          <td class="px-4 py-2">{{ r.fin|fecha_hora }}</td>
-          <td class="px-4 py-2">{{ r.asistentes }}</td>
-          <td class="px-4 py-2">{{ r.responsable }}</td>
+        {% for rv in reservas_vista %}
+        {% set r = rv.reserva %}
+        <tr{% if rv.estado == "finalizada" %} class="fila-finalizada"{% endif %}>
+          <th scope="row">{{ r.sala.nombre }}</th>
+          <td data-label="Inicio">{{ r.inicio|fecha_hora }}</td>
+          <td data-label="Fin">{{ r.fin|fecha_hora }}</td>
+          <td data-label="Asistentes">{{ r.asistentes }}</td>
+          <td data-label="Responsable">{{ r.responsable }}</td>
+          <td data-label="Estado"><span class="badge {{ rv.clase }}">{{ rv.etiqueta }}</span></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
   {% else %}
-  <p class="text-slate-500">Aún no hay reservas.</p>
+  <div class="card card-muted">
+    <p class="font-semibold">Todavía no hay reservas.</p>
+    <p class="muted">Cuando alguien reserve una sala, aparecerá en esta lista.</p>
+  </div>
   {% endif %}
 </div>

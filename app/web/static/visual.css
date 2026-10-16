@@ -1,0 +1,187 @@
+/* Capa visual sobre app.css (se carga después y solo sobrescribe; app.css no se toca).
+   Para revertirla basta con quitar su <link> de base.html.
+
+   Paleta (5 colores de marca, ya definidos como variables en app.css):
+     carbón      #24252B  --bg       fondo general
+     superficie  #303138  --surface  tarjetas y paneles
+     violeta     #6B5CFF  --primary  acción principal
+     cian        #00D5E8  --cyan     acentos y foco (--focus)
+     texto       #F4F4FA  --ink      texto principal
+   Los colores de estado (éxito, error, aviso, información) se mantienen aparte en app.css
+   (--ok-*, --err-*, --warn-*, --info-*) y no forman parte de la paleta de marca.
+
+   Movimiento: solo transform y opacity; nada bloquea la interacción. Todo se anula con
+   prefers-reduced-motion: reduce o con data-movimiento="off" en <html>. */
+
+/* ================================================================ 1. Fondo y portada */
+
+/* Estrellas y nebulosa quietas y más tenues: acompañan sin competir con la lectura. */
+html::before,
+html::after {
+  animation: none;
+  transform: none;
+  opacity: 0.55;
+}
+body::before,
+body::after {
+  animation: none;
+  transform: none;
+  will-change: auto;
+}
+body::before { opacity: 0.3; }
+body::after { opacity: 0.3; }
+
+/* El casco de la portada queda quieto (sin flotación ni giro) con un halo estático. */
+.hero-logo {
+  animation: none;
+  transform: none;
+}
+.hero-logo-wrap::before {
+  animation: none;
+  transform: none;
+  opacity: 0.8;
+}
+
+/* La órbita decorativa no se muestra. */
+.hero-orbita {
+  display: none;
+  animation: none;
+}
+
+/* ================================================================ 2. Aparición al hacer scroll */
+
+/* scroll.js pone .js-revelar en <html> y marca con .revelar-oculto solo lo que está por
+   debajo del pliegue al cargar. Sin JS (o sin IntersectionObserver) nada queda oculto. */
+.js-revelar .revelar-oculto {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.js-revelar .revelar-transicion {
+  transition:
+    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ================================================================ 3. Microinteracciones */
+
+.btn,
+.btn-primary,
+.btn-secondary {
+  transition-property: transform, opacity, color, background-color, border-color;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-link {
+  transition-property: transform, opacity, color, background-color, border-color;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+a.card,
+.card-interactive {
+  transition-property: transform, opacity, color, background-color, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* El cambio de color lo da el fondo/borde de cada variante; se quita el brillo con filtro. */
+.btn:hover { filter: none; }
+
+/* Elevación en hover solo con puntero real (en pantallas táctiles el hover se "pega"). */
+@media (hover: hover) {
+  .btn:hover,
+  .nav-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.55);
+  }
+  .nav-link[aria-current="page"]:hover {
+    transform: none;
+    box-shadow: inset 0 -2px 0 var(--cyan);
+  }
+  .card-interactive:hover,
+  a.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.6);
+  }
+}
+@media (hover: none) {
+  .btn:hover,
+  .nav-link:hover,
+  .card-interactive:hover,
+  a.card:hover {
+    transform: none;
+  }
+}
+
+/* Presión */
+.btn:active,
+.nav-link:active {
+  transform: scale(0.98);
+  transition-duration: 90ms;
+}
+
+/* Botón deshabilitado: sin elevación ni presión */
+.btn[disabled]:hover,
+.btn[disabled]:active,
+.btn[aria-disabled="true"]:hover,
+.btn[aria-disabled="true"]:active {
+  transform: none;
+  box-shadow: none;
+}
+
+/* El foco visible se mantiene: contorno cian por encima de cualquier sombra. */
+.btn:focus-visible,
+.nav-link:focus-visible,
+.card-interactive:focus-visible,
+a.card:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ================================================================ Movimiento reducido */
+
+@media (prefers-reduced-motion: reduce) {
+  .js-revelar .revelar-oculto {
+    opacity: 1;
+    transform: none;
+  }
+  .js-revelar .revelar-transicion { transition: none; }
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .nav-link,
+  a.card,
+  .card-interactive {
+    transition-property: color, background-color, border-color;
+  }
+  .btn:hover,
+  .btn:active,
+  .nav-link:hover,
+  .nav-link:active,
+  .card-interactive:hover,
+  a.card:hover {
+    transform: none;
+  }
+}
+
+:root[data-movimiento="off"] body::after { opacity: 0.3; }
+:root[data-movimiento="off"].js-revelar .revelar-oculto {
+  opacity: 1;
+  transform: none;
+}
+:root[data-movimiento="off"].js-revelar .revelar-transicion { transition: none; }
+:root[data-movimiento="off"] .btn,
+:root[data-movimiento="off"] .btn-primary,
+:root[data-movimiento="off"] .btn-secondary,
+:root[data-movimiento="off"] .nav-link,
+:root[data-movimiento="off"] a.card,
+:root[data-movimiento="off"] .card-interactive {
+  transition-property: color, background-color, border-color;
+}
+:root[data-movimiento="off"] .btn:hover,
+:root[data-movimiento="off"] .btn:active,
+:root[data-movimiento="off"] .nav-link:hover,
+:root[data-movimiento="off"] .nav-link:active,
+:root[data-movimiento="off"] .card-interactive:hover,
+:root[data-movimiento="off"] a.card:hover {
+  transform: none;
+}
