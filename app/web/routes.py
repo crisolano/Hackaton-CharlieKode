@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import NamedTuple
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -11,8 +12,14 @@ STATIC_DIR = WEB_DIR / "static"
 
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
 
-# Secciones de la navegación común; cada sprint agrega las suyas.
-NAV_ITEMS: list[dict[str, str]] = []
+
+class NavItem(NamedTuple):
+    label: str
+    href: str
+
+
+# Secciones de la navegación común; cada sprint agrega las suyas aquí (tupla inmutable).
+NAV_ITEMS: tuple[NavItem, ...] = ()
 
 router = APIRouter(include_in_schema=False)
 
