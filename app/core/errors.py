@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Mensajes y textos centralizados (para facilitar cambios en la defensa)
 ERROR_MESSAGES = {
@@ -104,6 +105,22 @@ def setup_exception_handlers(app: FastAPI) -> None:
                 "mensaje": ERROR_MESSAGES["DATOS_INVALIDOS"],
                 "detalles": exc.errors(),
             },
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(
+        request: Request, exc: StarletteHTTPException
+    ) -> JSONResponse:
+        if exc.status_code == status.HTTP_404_NOT_FOUND:
+            codigo = "NO_ENCONTRADO"
+            mensaje = ERROR_MESSAGES["NO_ENCONTRADO"]
+        else:
+            codigo = "ERROR_INTERNO" if exc.status_code >= 500 else "DATOS_INVALIDOS"
+            mensaje = ERROR_MESSAGES[codigo]
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"ok": False, "codigo": codigo, "mensaje": mensaje},
+            headers=getattr(exc, "headers", None),
         )
 
     @app.exception_handler(Exception)
