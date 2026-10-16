@@ -4,9 +4,15 @@ from pathlib import Path
 import pytest
 from sqlalchemy.orm import Session
 
-from app.data.loader import cargar_salas_dataset
-from app.data.seed import RUTA_DATASET_DEFAULT, main, seed_salas
-from app.models import Sala
+from app.data.loader import cargar_equipos_dataset, cargar_salas_dataset
+from app.data.seed import (
+    RUTA_DATASET_DEFAULT,
+    RUTA_DATASET_EQUIPOS_DEFAULT,
+    main,
+    seed_equipos,
+    seed_salas,
+)
+from app.models import Equipo, Sala
 
 
 def test_cargar_dataset_oficial():
@@ -145,3 +151,28 @@ def test_seed_cli_main(monkeypatch, tmp_path: Path):
     monkeypatch.setattr("sys.argv", ["seed.py"])
     codigo = main()
     assert codigo == 0
+
+
+def test_cargar_equipos_dataset_oficial():
+    """Valida la carga del archivo csv de equipos."""
+    assert RUTA_DATASET_EQUIPOS_DEFAULT.exists()
+    resultado = cargar_equipos_dataset(RUTA_DATASET_EQUIPOS_DEFAULT)
+
+    assert resultado.total_leidas == 12
+    assert len(resultado.validas) == 12
+    assert len(resultado.rechazadas) == 0
+
+
+def test_seed_equipos_idempotente(db: Session):
+    """Verifica que el seed de equipos sea idempotente."""
+    resumen = seed_equipos(db)
+    assert resumen["status"] == "completado"
+    assert resumen["creadas"] == 12
+    assert db.query(Equipo).count() == 12
+
+    # Segunda ejecución no duplica
+    resumen2 = seed_equipos(db)
+    assert resumen2["status"] == "ya_inicializada"
+    assert resumen2["creadas"] == 0
+    assert db.query(Equipo).count() == 12
+
