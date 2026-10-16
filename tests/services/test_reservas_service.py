@@ -3,7 +3,8 @@ from datetime import datetime
 import pytest
 from sqlalchemy.orm import Session
 
-from app.core.errors import AforoExcedido, NoEncontrado, SalaOcupada
+from app.core.config import SalaEstado
+from app.core.errors import AforoExcedido, NoEncontrado, RecursoNoDisponible, SalaOcupada
 from app.models import Reserva, Sala
 from app.schemas import ReservaCreate
 from app.services import (
@@ -247,3 +248,25 @@ def test_listar_reservas_y_filtro(db: Session):
     solo_sala1 = listar_reservas(db, sala_id=sala1.id)
     assert len(solo_sala1) == 1
     assert solo_sala1[0].responsable == "User 1"
+
+
+def test_crear_reserva_rechazo_sala_inhabilitada(db: Session):
+    sala = Sala(nombre="Sala Mantenimiento", aforo=20, estado=SalaEstado.INHABILITADA.value)
+    db.add(sala)
+    db.commit()
+    db.refresh(sala)
+
+    reserva = ReservaCreate(
+        sala_id=sala.id,
+        inicio=datetime(2026, 10, 16, 10, 0),
+        fin=datetime(2026, 10, 16, 12, 0),
+        asistentes=5,
+        responsable="Responsable Test",
+    )
+
+    with pytest.raises(RecursoNoDisponible) as exc_info:
+        crear_reserva(db, reserva)
+
+    assert exc_info.value.codigo == "RECURSO_NO_DISPONIBLE"
+    assert exc_info.value.detalles == {"estado": SalaEstado.INHABILITADA.value}
+    assert db.query(Reserva).count() == 0
