@@ -14,6 +14,9 @@ ERROR_MESSAGES = {
     "ERROR_INTERNO": "Ocurrió un error interno en el servidor.",
 }
 
+MSG_ERROR_RANGO_HORARIO = "La fecha de inicio debe ser anterior a la fecha de fin."
+MSG_ERROR_TIMEZONE = "Las fechas de reserva deben ser en hora local sin zona horaria (naive)."
+
 
 class AppException(Exception):
     def __init__(

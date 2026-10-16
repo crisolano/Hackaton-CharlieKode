@@ -136,3 +136,43 @@ def test_schema_reserva_rechaza_fechas_con_timezone():
             responsable="Tester",
         )
     assert "naive" in str(exc_info.value)
+
+
+def test_schema_sala_rechaza_aforo_invalido():
+    with pytest.raises(ValidationError) as exc_info:
+        SalaCreate(nombre="Sala Invalida", aforo=0)
+    assert "aforo" in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        SalaCreate(nombre="Sala Invalida", aforo=-5)
+    assert "aforo" in str(exc_info.value)
+
+
+def test_schema_sala_rechaza_nombre_vacio():
+    with pytest.raises(ValidationError) as exc_info:
+        SalaCreate(nombre="", aforo=10)
+    assert "nombre" in str(exc_info.value)
+
+
+def test_eliminacion_en_cascada_sala_reserva(db: Session):
+    sala = Sala(nombre="Sala Cascada", aforo=20)
+    db.add(sala)
+    db.commit()
+    db.refresh(sala)
+
+    reserva = Reserva(
+        sala_id=sala.id,
+        inicio=datetime(2026, 10, 16, 14, 0),
+        fin=datetime(2026, 10, 16, 16, 0),
+        asistentes=10,
+        responsable="Tester Cascada",
+    )
+    db.add(reserva)
+    db.commit()
+
+    reserva_id = reserva.id
+    db.delete(sala)
+    db.commit()
+
+    reserva_borrada = db.query(Reserva).filter(Reserva.id == reserva_id).first()
+    assert reserva_borrada is None

@@ -2,8 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-MSG_ERROR_RANGO_HORARIO = "La fecha de inicio debe ser anterior a la fecha de fin."
-MSG_ERROR_TIMEZONE = "Las fechas de reserva deben ser en hora local sin zona horaria (naive)."
+from app.core.errors import MSG_ERROR_RANGO_HORARIO, MSG_ERROR_TIMEZONE
 
 
 class ReservaBase(BaseModel):
