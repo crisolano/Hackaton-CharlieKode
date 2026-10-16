@@ -12,3 +12,5 @@
 **Ramas:** features `feature/dev1-*`, `feature/dev2-*` y `feature/dev3-*` → PR a `develop`. Al terminar el sprint, los tres revisan `develop` (`pytest`, app arrancando) y se hace PR `develop` → `main`.
 
 **Punto de integración (al final del sprint):** `POST /api/reservas` y el formulario HTMX usan el mismo `services.reservas.crear_reserva()`.
+
+**Orden de los PR de este sprint:** identificadores `S1-PR1`, `S1-PR2`... en [05-orden-de-pull-requests.md](../../05-orden-de-pull-requests.md).
