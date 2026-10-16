@@ -48,6 +48,7 @@ git push -u origin feature/dev1-reglas-r1-r2
    - [ ] `pytest` y `ruff check .` pasan.
    - [ ] Solo toca carpetas del autor (o archivos compartidos justificados).
    - [ ] Sin `.env`, claves ni datos reales.
+   - [ ] Nada hardcodeado: ni claves, ni salas/aforos, ni respuestas de IA, ni valores repetidos que deban estar en configuración ([guía](04-guia-desarrollo.md#11-regla-nada-hardcodeado)).
    - [ ] No rompe el contrato de API ni los formatos de error/éxito.
 6. **Revisión de choques en `develop`:** tras cada merge, quien mergea corre `pytest` y levanta la app (`uvicorn app.main:app`). Si `develop` se rompe, se arregla antes de seguir.
 

@@ -15,7 +15,7 @@ Antes de cada PR: `git merge origin/develop`, `pytest` y `ruff check .`.
 
 - [ ] Plantilla base Jinja2 (`templates/base.html`) con Tailwind por CDN y HTMX cargado.
 - [ ] Rutas HTML en `app/web/routes.py` y montaje de `static/`.
-- [ ] Página de salas (nombre, aforo, estado) con tabla.
+- [ ] Página de salas (nombre, aforo, estado) con tabla, leída de la base de datos; el selector de salas del formulario se genera desde los datos, sin opciones escritas a mano en la plantilla.
 - [ ] Formulario de reserva con HTMX (`hx-post`) que llama al servicio y devuelve un parcial de éxito o error.
 - [ ] Mensajes de éxito, error y estados de carga (`hx-indicator`).
 - [ ] Verificar que `docker compose up --build` arranca la app.

@@ -16,8 +16,8 @@ Antes de cada PR: `git merge origin/develop`, `pytest` y `ruff check .`.
 
 - [ ] Modelos SQLAlchemy `Sala` y `Reserva` (`app/models/`) y esquemas Pydantic (`app/schemas/`).
 - [ ] Loader del dataset oficial con pandas/csv/json: normaliza y tolera registros inconsistentes (`app/data/loader.py`).
-- [ ] Script de seed: carga las 9 salas con su aforo solo si la base está vacía y registra las filas rechazadas (`app/data/seed.py`).
-- [ ] R1 (aforo) y R2 (solapamiento) como funciones puras en `app/rules/`.
+- [ ] Script de seed: carga las 9 salas con su aforo **desde el dataset en `datos/`** (nunca desde listas en el código) solo si la base está vacía y registra las filas rechazadas (`app/data/seed.py`).
+- [ ] R1 (aforo) y R2 (solapamiento) como funciones puras en `app/rules/`; el aforo se lee de la sala en la base de datos, y los mensajes y umbrales de `core/`.
 - [ ] `services/reservas.py::crear_reserva()` aplicando R1 y R2 y lanzando excepciones de dominio.
 - [ ] Pruebas de R1 y R2 en `tests/rules/` (caso válido e inválido de cada una).
 

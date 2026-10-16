@@ -14,6 +14,23 @@ ruff check . ; ruff format .    # lint y formato
 ```
 Docker (ruta del jurado): `docker compose up --build`.
 
+## 1.1 Regla: nada hardcodeado
+Prohibido escribir en el código valores que deban venir de otro lugar. Penaliza en la evaluación (respuestas de IA quemadas: 15 pts; claves en el repo: 10 pts).
+
+| Qué | Dónde debe vivir | Prohibido |
+|---|---|---|
+| Claves de API, `DATABASE_URL`, proveedor de IA, timeouts, reintentos | `.env` → `core/config.py` | Literales en el código, en plantillas o en commits |
+| Salas, aforos, equipos y cualquier dato de negocio | Dataset oficial en `datos/` → seed → base de datos | Listas de salas o aforos en el código, en reglas o en plantillas |
+| Respuestas de la IA (categoría, prioridad, ruta) | Salida real del modelo, validada | Respuestas simuladas, "fallback" que invente una clasificación o `if "proyector" in texto` |
+| Valores permitidos (estados, categorías, prioridades, rutas) | Enumeraciones únicas ([sección 3](#3-valores-permitidos-confirmar)) | Strings repetidos en reglas, esquemas, prompts y plantillas |
+| Umbrales y mensajes de error (p. ej. mínimos de asistentes) | `core/config.py` y `core/errors.py` | Números o textos mágicos dentro de las reglas |
+| URLs, puertos y nombres de modelo de IA | Configuración | Literales dispersos en el código |
+| Datos de pruebas | Fixtures en `tests/` | Datos de prueba dentro de `app/` |
+
+Cuando la IA falla, el sistema **no inventa** nada: la incidencia queda `pendiente_revision`. Las pruebas usan un cliente de IA doble solo dentro de `tests/`.
+
+Verificación rápida antes de cada PR: buscar en el diff claves, literales de salas/aforos y respuestas de IA fijas (`git diff develop | grep -inE "api_key|aiza|sk-|auditorio|skilab"`); el resultado solo debe aparecer en `tests/`, `datos/` o la documentación.
+
 ## 2. Variables de entorno
 | Variable | Ejemplo | Uso |
 |---|---|---|
@@ -89,5 +106,6 @@ Respuesta: `{ "ok": true, "data": { "id": 7, "categoria": "hardware", "prioridad
 - [ ] Hace lo que dice el sprint y está probada (caso válido e inválido si es una regla).
 - [ ] `pytest` y `ruff check .` pasan.
 - [ ] Sin claves, `.env` ni datos reales.
+- [ ] Nada hardcodeado ([sección 1.1](#11-regla-nada-hardcodeado)): ni configuración, ni datos de negocio, ni respuestas de IA.
 - [ ] Rama actualizada con `develop` y PR revisado por otro dev ([03-gitflow.md](03-gitflow.md)).
 - [ ] Si cambia el contrato, `01-arquitectura.md` y esta guía están actualizados.

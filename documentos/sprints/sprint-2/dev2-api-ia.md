@@ -13,7 +13,9 @@ Todas salen de `develop` (ya actualizada con el Sprint 1) y vuelven por PR. Orde
 Antes de cada PR: `git merge origin/develop`, `pytest` y `ruff check .`.
 
 - [ ] `ai/base.py`: interfaz `AIClient`; `ai/providers/`: Gemini (principal) y Groq (respaldo); selección con `AI_PROVIDER`.
-- [ ] `ai/prompts.py`: prompt de triaje que exige salida estructurada (categoría, prioridad, ruta).
+- [ ] `ai/prompts.py`: prompt de triaje que exige salida estructurada (categoría, prioridad, ruta); las opciones del prompt se generan desde las enumeraciones, no se copian a mano.
+- [ ] Prohibido clasificar con reglas fijas o texto predefinido: si la IA falla, queda `pendiente_revision`.
+- [ ] Modelo, timeout, reintentos y claves solo desde configuración (`.env`).
 - [ ] `ai/triage.py`: valida la salida con Pydantic contra valores permitidos.
 - [ ] Timeout y respuestas inválidas: la incidencia queda "pendiente de revisión manual", sin inventar respuesta.
 - [ ] Routers: `GET /api/equipos`, `POST /api/prestamos`, `POST /api/prestamos/{id}/devolucion`, `POST /api/incidencias`, `GET /api/incidencias`.

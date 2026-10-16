@@ -144,7 +144,8 @@ Hackaton-CharlieKode/
 - **Tipado y validación:** type hints en todo y Pydantic en cada frontera (HTTP, datos importados, salida de la IA).
 - **Excepciones de dominio** (`AforoExcedido`, `SalaOcupada`, `RecursoNoDisponible`) lanzadas por las reglas y convertidas a respuesta por un handler global; sin `except` desnudos.
 - **Inyección de dependencias** de FastAPI (`Depends`) para sesión de BD y cliente de IA: facilita las pruebas con dobles.
-- **Sin estado global ni secretos en código.** Todo viene de `.env`.
+- **Nada hardcodeado:** configuración y claves vienen de `.env`; salas, aforos y equipos vienen del dataset y la base de datos; las respuestas de la IA, del modelo real. Reglas completas en [04-guia-desarrollo.md](04-guia-desarrollo.md#11-regla-nada-hardcodeado).
+- **Sin estado global ni secretos en código.**
 - **ruff** limpio antes de cada commit; commits pequeños con mensajes descriptivos.
 
 ## 6. Modelo de datos
