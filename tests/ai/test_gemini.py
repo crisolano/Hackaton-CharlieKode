@@ -73,6 +73,94 @@ def test_error_4xx_no_reintenta():
     assert len(llamadas) == 1
 
 
+def test_error_429_reintenta_y_se_recupera():
+    respuestas = iter([httpx.Response(429), httpx.Response(200, json=_ok("listo"))])
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return next(respuestas)
+
+    assert _client(handler, max_retries=1).generate("hola") == "listo"
+
+
+def test_reintentos_agotados_hacen_max_retries_mas_uno_llamadas():
+    llamadas = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        llamadas.append(1)
+        return httpx.Response(500)
+
+    with pytest.raises(AIError):
+        _client(handler, max_retries=2).generate("hola")
+    assert len(llamadas) == 3
+
+
+def test_sin_reintentos_hace_una_sola_llamada():
+    llamadas = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        llamadas.append(1)
+        return httpx.Response(500)
+
+    with pytest.raises(AIError):
+        _client(handler, max_retries=0).generate("hola")
+    assert len(llamadas) == 1
+
+
+def test_respuesta_que_no_es_json_lanza_error_sin_reintentar():
+    llamadas = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        llamadas.append(1)
+        return httpx.Response(200, content=b"<html>no es json</html>")
+
+    with pytest.raises(AIError, match="no es JSON"):
+        _client(handler, max_retries=3).generate("hola")
+    assert len(llamadas) == 1
+
+
+def test_peticion_bloqueada_por_seguridad_lanza_error():
+    cuerpo = {"promptFeedback": {"blockReason": "SAFETY"}}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=cuerpo)
+
+    with pytest.raises(AIError, match="bloqueó"):
+        _client(handler, max_retries=0).generate("hola")
+
+
+def test_candidato_sin_contenido_lanza_error_con_el_motivo():
+    cuerpo = {"candidates": [{"finishReason": "MAX_TOKENS"}]}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=cuerpo)
+
+    with pytest.raises(AIError, match="MAX_TOKENS"):
+        _client(handler, max_retries=0).generate("hola")
+
+
+@pytest.mark.parametrize(
+    "respuesta",
+    [httpx.Response(403), httpx.Response(500), httpx.Response(200, json={})],
+)
+def test_la_clave_no_aparece_en_los_mensajes_de_error(respuesta):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return respuesta
+
+    with pytest.raises(AIError) as info:
+        _client(handler, max_retries=0).generate("hola")
+    assert "clave-de-prueba" not in str(info.value)
+
+
+def test_close_cierra_el_cliente_http_y_funciona_como_gestor_de_contexto():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=_ok("ok"))
+
+    with _client(handler) as cliente:
+        assert cliente.generate("hola") == "ok"
+    with pytest.raises(RuntimeError):
+        cliente.generate("otra vez")
+
+
 @pytest.mark.parametrize("cuerpo", [{}, {"candidates": []}, _ok("   ")])
 def test_respuesta_invalida_o_vacia_lanza_error(cuerpo):
     def handler(request: httpx.Request) -> httpx.Response:

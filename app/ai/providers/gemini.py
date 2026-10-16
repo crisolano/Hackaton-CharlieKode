@@ -33,7 +33,11 @@ class GeminiClient(AIClient):
             try:
                 response = self._http.post(f"/models/{self._model}:generateContent", json=body)
                 response.raise_for_status()
-                return self._extraer_texto(response.json())
+                try:
+                    data = response.json()
+                except ValueError as exc:
+                    raise AIError("Gemini devolvió una respuesta que no es JSON.") from exc
+                return self._extraer_texto(data)
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 ultimo_error = exc
             except httpx.HTTPStatusError as exc:
@@ -44,10 +48,28 @@ class GeminiClient(AIClient):
                 ultimo_error = exc
         raise AIError("No se obtuvo respuesta de Gemini.") from ultimo_error
 
+    def close(self) -> None:
+        self._http.close()
+
+    def __enter__(self) -> "GeminiClient":
+        return self
+
+    def __exit__(self, *exc_info) -> None:
+        self.close()
+
     @staticmethod
     def _extraer_texto(data: dict) -> str:
+        if not isinstance(data, dict):
+            raise AIError("Respuesta de Gemini con formato inesperado.")
+        if (data.get("promptFeedback") or {}).get("blockReason"):
+            raise AIError("Gemini bloqueó la petición por sus filtros de seguridad.")
         try:
-            partes = data["candidates"][0]["content"]["parts"]
+            candidato = data["candidates"][0]
+            if "content" not in candidato:
+                raise AIError(
+                    f"Gemini no devolvió contenido (motivo: {candidato.get('finishReason', '?')})."
+                )
+            partes = candidato["content"]["parts"]
             texto = "".join(parte.get("text", "") for parte in partes)
         except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise AIError("Respuesta de Gemini con formato inesperado.") from exc
