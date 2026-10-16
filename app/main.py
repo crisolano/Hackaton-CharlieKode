@@ -21,6 +21,7 @@ app.include_router(web_router)
 
 @app.get("/health", tags=["Salud"])
 def health_check() -> dict:
+    """Verifica el estado operativo del servicio."""
     return {
         "ok": True,
         "status": "healthy",

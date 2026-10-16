@@ -26,4 +26,5 @@ def render(request: Request, template: str, **context) -> HTMLResponse:
 
 @router.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
+    """Muestra la vista de bienvenida e inicio de la aplicación web."""
     return render(request, "index.html")
