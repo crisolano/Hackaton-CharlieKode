@@ -29,6 +29,9 @@ ERROR_MESSAGES = {
     "NO_ENCONTRADO": "El recurso solicitado no fue encontrado.",
     "DATOS_INVALIDOS": "Los datos proporcionados no son válidos.",
     "ERROR_INTERNO": "Ocurrió un error interno en el servidor.",
+    "IA_NO_DISPONIBLE": (
+        "El servicio de IA no está disponible; la solicitud quedó pendiente de revisión manual."
+    ),
 }
 
 ERROR_TEMPLATES = {
