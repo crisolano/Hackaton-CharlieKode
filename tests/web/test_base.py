@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.web.routes import NAV_ITEMS
 
 client = TestClient(app)
 
@@ -10,6 +11,16 @@ def test_index_renderiza_base_con_tailwind_y_htmx():
     assert r.status_code == 200
     assert "cdn.tailwindcss.com" in r.text
     assert "htmx.org" in r.text
+
+
+def test_htmx_con_integridad():
+    r = client.get("/")
+    assert 'integrity="sha384-' in r.text
+    assert 'crossorigin="anonymous"' in r.text
+
+
+def test_nav_items_es_inmutable():
+    assert isinstance(NAV_ITEMS, tuple)
 
 
 def test_static_servido():
