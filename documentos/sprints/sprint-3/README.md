@@ -9,4 +9,6 @@
 | Dev 2 — API e IA | [dev2-api-ia.md](dev2-api-ia.md) |
 | Dev 3 — Interfaz y entrega | [dev3-interfaz-entrega.md](dev3-interfaz-entrega.md) |
 
+**Ramas:** inicio con `git pull origin develop`; features de estabilización → PR a `develop`. Al terminar, PR final `develop` → `main` (versión que se despliega y se defiende).
+
 **Congelar funcionalidades nuevas** a las 4:00; el resto del sprint es estabilizar.

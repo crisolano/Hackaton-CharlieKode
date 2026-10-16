@@ -9,4 +9,6 @@
 | Dev 2 — API e IA | [dev2-api-ia.md](dev2-api-ia.md) |
 | Dev 3 — Interfaz y entrega | [dev3-interfaz-entrega.md](dev3-interfaz-entrega.md) |
 
+**Ramas:** inicio del sprint con `git pull origin develop`; features `feature/dev1-*`, `feature/dev2-*` y `feature/dev3-*` → PR a `develop`. Al terminar, PR `develop` → `main`.
+
 **Punto de integración:** `services.incidencias.crear_incidencia()` recibe el cliente de IA por inyección (`Depends`) y guarda el resultado del triaje.
