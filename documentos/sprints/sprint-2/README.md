@@ -12,3 +12,5 @@
 **Ramas:** inicio del sprint con `git pull origin develop`; features `feature/dev1-*`, `feature/dev2-*` y `feature/dev3-*` → PR a `develop`. Al terminar, PR `develop` → `main`.
 
 **Punto de integración:** `services.incidencias.crear_incidencia()` recibe el cliente de IA por inyección (`Depends`) y guarda el resultado del triaje.
+
+**Orden de los PR de este sprint:** identificadores `S2-PR1`, `S2-PR2`... en [05-orden-de-pull-requests.md](../../05-orden-de-pull-requests.md).

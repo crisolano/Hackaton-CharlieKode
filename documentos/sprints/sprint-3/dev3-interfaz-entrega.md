@@ -9,6 +9,10 @@ Todas salen de `develop` y vuelven por PR. Sin funcionalidades nuevas: solo esta
 | 2 | `feature/dev3-despliegue-vercel` | Despliegue con Postgres del Marketplace, link público y `/health` | `develop` |
 | 3 | `feature/dev3-readme-final` | README completo, guion de demo y verificación desde cero | `develop` |
 
+**Orden de merge:** fase 1 = `S3-PR3`, fase 2 = `S3-PR6`, fase 3 = `S3-PR9`. Detalle, dependencias y zonas de choque en [05-orden-de-pull-requests.md](../../05-orden-de-pull-requests.md).
+
+> **Aviso para el agente y para quien trabaja:** antes de crear una rama o abrir un PR, consulta ese documento. Si alguna dependencia (columna "Depende de") todavía no está mergeada en `develop`, no abras el PR: avisa al usuario de qué PR falta y quién lo tiene. Si ves que un PR salta el orden o apunta a `main`, avísalo también.
+
 Antes de cada PR: `git merge origin/develop`, `pytest` y `ruff check .`.
 
 - [ ] Pulido de la UI y de los mensajes de validación.
