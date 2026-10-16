@@ -37,19 +37,26 @@ Detalle de capas y decisiones en [documentos/01-arquitectura.md](documentos/01-a
 Viven en `app/rules/` como funciones puras.
 
 ## Uso de IA
-_Se completa en el Sprint 2._ La IA clasifica las incidencias escritas en texto libre; su salida se valida contra valores permitidos y, si falla, la incidencia queda pendiente de revisión manual.
+El módulo de incidencias (`app/ai/`) implementa un triaje inteligente automatizado asistido por IA:
+- **Adaptador desacoplado (`AIClient`):** Soporta Google Gemini (`gemini-2.5-flash-lite`) y Groq (`llama-3.1-8b-instant`) mediante un factory configurable por variable de entorno (`AI_PROVIDER`).
+- **Triaje estructurado:** Analiza el texto libre de la incidencia y extrae:
+  - `categoria`: electrica, red, hardware, software, mobiliario, aseo, seguridad, otra.
+  - `prioridad`: baja, media, alta, critica.
+  - `ruta`: mantenimiento, soporte_tecnico, administracion, seguridad, revision_manual.
+- **Protección y validación:** Sanitiza inyecciones de prompt y valida la respuesta estructurada con esquemas Pydantic.
+- **Tolerancia a fallos:** Si el proveedor de IA no está disponible o la respuesta es inválida, el sistema **no falla**: enruta automáticamente la incidencia a `revision_manual` con estado `pendiente_revision`.
 
 ## Instalación y ejecución
 
-### Con Docker (ruta recomendada)
+### Con Docker (ruta recomendada y reproducible)
 ```powershell
 docker compose up --build
 ```
-No hace falta crear `.env`; las claves de IA se leen de él solo si existe (`copy .env.example .env`).
+La aplicación inicializa automáticamente la base de datos con los datos oficiales de Campuslands (`datos/salas.csv` y `datos/equipos.csv`).
 
-- Aplicación: http://localhost:8000
-- Documentación Swagger: http://localhost:8000/docs
-- Endpoint de salud: http://localhost:8000/health
+- **Aplicación web:** http://localhost:8000
+- **Documentación interactiva (Swagger UI):** http://localhost:8000/docs
+- **Endpoint de salud:** http://localhost:8000/health
 
 ### En local
 1. **Crear y activar entorno virtual:**
@@ -61,20 +68,20 @@ No hace falta crear `.env`; las claves de IA se leen de él solo si existe (`cop
    ```powershell
    pip install -r requirements-dev.txt
    ```
-3. **Variables de entorno:**
+3. **Variables de entorno (opcional para IA real):**
    ```powershell
    copy .env.example .env
    ```
-4. **Ejecutar servidor local:**
+4. **Cargar dataset oficial (seed):**
+   ```powershell
+   python -m app.data.seed
+   ```
+5. **Ejecutar servidor local:**
    ```powershell
    uvicorn app.main:app --reload
    ```
-5. **Pruebas y calidad de código:**
+6. **Pruebas y calidad de código:**
    ```powershell
    pytest
    ruff check .
-   ruff format .
    ```
-
-### En Vercel
-_Se completa en el Sprint 3._
