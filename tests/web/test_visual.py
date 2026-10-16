@@ -43,10 +43,10 @@ def test_salas_conserva_ids_campos_y_atributos_htmx(client, salas_de_prueba):
         assert atributo in r.text, atributo
 
 
-def test_portada_mantiene_equipos_e_incidencias_como_proximamente(client):
+def test_portada_mantiene_incidencias_como_proximamente(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert r.text.count("Próximamente") == 2
+    assert r.text.count("Próximamente") == 1
     assert "Equipos" in r.text and "Incidencias" in r.text
 
 

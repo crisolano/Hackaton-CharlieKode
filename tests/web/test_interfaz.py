@@ -22,10 +22,10 @@ def test_portada_sin_salas_explica_como_cargarlas(client):
     assert "python -m app.data.seed" in r.text
 
 
-def test_equipos_e_incidencias_se_anuncian_como_proximamente_sin_enlace(client):
+def test_incidencias_se_anuncia_como_proximamente_sin_enlace(client):
     r = client.get("/")
-    assert r.text.count("Próximamente") == 2
-    assert 'href="/equipos"' not in r.text
+    assert r.text.count("Próximamente") == 1
+    assert 'href="/equipos"' in r.text
     assert 'href="/incidencias"' not in r.text
 
 

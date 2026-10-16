@@ -6,12 +6,19 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.core.database import Base, SessionLocal, engine
-from app.data.loader import CargaDatasetResult, cargar_salas_dataset
-from app.models import Sala
+from app.data.loader import (
+    CargaDatasetResult,
+    cargar_equipos_dataset,
+    cargar_salas_dataset,
+)
+from app.models import Equipo, Sala
 
 logger = logging.getLogger(__name__)
 
 RUTA_DATASET_DEFAULT = Path(__file__).resolve().parent.parent.parent / "datos" / "salas.csv"
+RUTA_DATASET_EQUIPOS_DEFAULT = (
+    Path(__file__).resolve().parent.parent.parent / "datos" / "equipos.csv"
+)
 
 
 def seed_salas(
@@ -48,7 +55,7 @@ def seed_salas(
         )
         for r in resultado.rechazadas:
             logger.warning(
-                f"  [Fila {r['indice']}] {r['motivo']} | Contenido: {r['fila']}"
+                f"  [Fila {r['indice']}] {r['motivo']}"
             )
 
     # Persistir las salas válidas
@@ -76,6 +83,63 @@ def seed_salas(
     }
 
 
+def seed_equipos(
+    db: Session, ruta_archivo: Path | str | None = None
+) -> dict[str, Any]:
+    """
+    Carga los equipos desde el dataset en la base de datos de manera idempotente.
+    Solo realiza la inserción si la tabla de equipos está vacía.
+    """
+    total_existentes = db.query(Equipo).count()
+    if total_existentes > 0:
+        logger.info(
+            f"Seed de equipos omitido: base de datos con {total_existentes} equipos registrados."
+        )
+        return {
+            "status": "ya_inicializada",
+            "creadas": 0,
+            "existentes": total_existentes,
+            "rechazadas": 0,
+        }
+
+    archivo = Path(ruta_archivo) if ruta_archivo else RUTA_DATASET_EQUIPOS_DEFAULT
+    logger.info(f"Iniciando seed de equipos desde: {archivo}")
+
+    resultado: CargaDatasetResult = cargar_equipos_dataset(archivo)
+
+    if resultado.rechazadas:
+        logger.warning(
+            f"Se encontraron {len(resultado.rechazadas)} "
+            "registros inconsistentes en dataset de equipos:"
+        )
+        for r in resultado.rechazadas:
+            logger.warning(
+                f"  [Fila {r['indice']}] {r['motivo']}"
+            )
+
+    equipos_a_insertar = [
+        Equipo(
+            nombre=e["nombre"],
+            estado=e["estado"],
+        )
+        for e in resultado.validas
+    ]
+
+    db.add_all(equipos_a_insertar)
+    db.commit()
+
+    logger.info(
+        f"Seed de equipos completado exitosamente: {len(equipos_a_insertar)} equipos insertados."
+    )
+
+    return {
+        "status": "completado",
+        "creadas": len(equipos_a_insertar),
+        "rechazadas": len(resultado.rechazadas),
+        "total_leidas": resultado.total_leidas,
+    }
+
+
 def main() -> int:
     """Punto de entrada CLI para ejecutar el seed: python -m app.data.seed"""
     logging.basicConfig(
@@ -86,8 +150,10 @@ def main() -> int:
     Base.metadata.create_all(bind=engine)
 
     with SessionLocal() as db:
-        resumen = seed_salas(db)
-        logger.info(f"Resultado del seed: {resumen}")
+        resumen_salas = seed_salas(db)
+        logger.info(f"Resultado del seed de salas: {resumen_salas}")
+        resumen_equipos = seed_equipos(db)
+        logger.info(f"Resultado del seed de equipos: {resumen_equipos}")
 
     return 0
 
