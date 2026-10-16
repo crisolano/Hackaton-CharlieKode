@@ -93,11 +93,16 @@ def test_mensaje_personalizado_se_conserva(client):
 
 
 def test_validacion_pydantic_devuelve_datos_invalidos(client):
-    response = client.post("/validar", json={"asistentes": "no-es-numero"})
+    response = client.post("/validar", json={"asistentes": "valor-secreto-no-exponer"})
     assert response.status_code == 422
     data = response.json()
     assert data["ok"] is False
     assert data["codigo"] == "DATOS_INVALIDOS"
+    assert "valor-secreto-no-exponer" not in response.text
+    for detalle in data["detalles"]:
+        assert "input" not in detalle
+        assert "loc" in detalle
+        assert "msg" in detalle
 
 
 def test_ruta_inexistente_devuelve_no_encontrado(client):
