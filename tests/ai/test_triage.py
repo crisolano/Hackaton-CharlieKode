@@ -119,6 +119,19 @@ def test_los_campos_del_triaje_existen_en_el_modelo_incidencia():
     assert set(ResultadoTriaje.model_fields) <= columnas
 
 
+def test_triar_incidencia_es_el_punto_de_entrada_que_usa_el_servicio_de_dev1():
+    """services.incidencias llama a triage.triar_incidencia(texto, ai_client=...)."""
+    from app.ai import triage
+
+    assert hasattr(triage, "triar_incidencia")
+    clasificada = triage.triar_incidencia("texto", ai_client=IADoble(_json()))
+    pendiente = triage.triar_incidencia("texto", ai_client=IADoble(AIError("caída")))
+
+    assert clasificada.estado == IncidenciaEstado.CLASIFICADA
+    assert clasificada.origen_ia is True
+    assert pendiente.estado == IncidenciaEstado.PENDIENTE_REVISION
+
+
 def test_el_texto_del_usuario_se_envia_al_cliente():
     ia = IADoble(_json())
     clasificar_incidencia("fuga de agua en el baño", ia)
