@@ -68,6 +68,12 @@ class Settings:
     GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
     AI_TIMEOUT_SECONDS: int = int(os.getenv("AI_TIMEOUT_SECONDS", "10"))
     AI_MAX_RETRIES: int = int(os.getenv("AI_MAX_RETRIES", "1"))
+    # Proveedor de respaldo si el principal falla (vacío = sin respaldo).
+    AI_FALLBACK_PROVIDER: str = os.getenv("AI_FALLBACK_PROVIDER", "")
+    # Espera base entre reintentos (se duplica en cada intento); Retry-After del proveedor manda.
+    AI_BACKOFF_SECONDS: float = float(os.getenv("AI_BACKOFF_SECONDS", "0.5"))
+    # Tope de tiempo total por proveedor, sumando intentos y esperas.
+    AI_TOTAL_TIMEOUT_SECONDS: float = float(os.getenv("AI_TOTAL_TIMEOUT_SECONDS", "20"))
     # Si se define, todos los endpoints /api exigen esta clave en el header X-API-Key.
     API_KEY: str = os.getenv("API_KEY", "")
     # En "production" se ocultan /docs, /redoc y /openapi.json.
