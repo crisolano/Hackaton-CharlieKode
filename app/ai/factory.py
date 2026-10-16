@@ -50,15 +50,6 @@ class ClienteIANoDisponible(AIClient):
         raise AIError(self.motivo)
 
 
-def get_ai_client_seguro(proveedor: str | None = None) -> AIClient:
-    """Como get_ai_client, pero si la configuración falla devuelve un ClienteIANoDisponible."""
-    try:
-        return get_ai_client(proveedor)
-    except AIError as exc:
-        logger.warning("IA no disponible: %s", exc)
-        return ClienteIANoDisponible(str(exc))
-
-
 def get_ai_client(proveedor: str | None = None) -> AIClient:
     """Construye el cliente del proveedor pedido, o el de AI_PROVIDER si no se indica."""
     nombre = proveedor or settings.AI_PROVIDER
@@ -66,3 +57,12 @@ def get_ai_client(proveedor: str | None = None) -> AIClient:
     if crear is None:
         raise AIError(f"Proveedor de IA no soportado: {nombre}")
     return crear()
+
+
+def get_ai_client_seguro(proveedor: str | None = None) -> AIClient:
+    """Como get_ai_client, pero si la configuración falla devuelve un ClienteIANoDisponible."""
+    try:
+        return get_ai_client(proveedor)
+    except AIError as exc:
+        logger.warning("IA no disponible: %s", exc)
+        return ClienteIANoDisponible(str(exc))

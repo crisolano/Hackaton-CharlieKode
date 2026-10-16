@@ -16,5 +16,10 @@ router = APIRouter(prefix="/api/equipos", tags=["Equipos"])
     response_model=ApiOk[list[EquipoRead]],
     summary="Lista los equipos y su estado, con filtro opcional por estado",
 )
-def get_equipos(db: DbSession, estado: Annotated[EquipoEstado | None, Query()] = None):
-    return ok(listar_equipos(db, estado.value if estado else None))
+def get_equipos(
+    db: DbSession,
+    estado: Annotated[EquipoEstado | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    return ok(listar_equipos(db, estado.value if estado else None, limit=limit, offset=offset))
