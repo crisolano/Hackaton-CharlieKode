@@ -1,0 +1,23 @@
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Datos locales
+*.db
+*.sqlite3
+
+# Vercel
+.vercel/
+
+# Editor / SO
+.vscode/
+.DS_Store

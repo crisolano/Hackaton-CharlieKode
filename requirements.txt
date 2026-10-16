@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy
+python-dotenv
+jinja2
+python-multipart
+pandas
+httpx
+psycopg[binary]
+pytest
+ruff
