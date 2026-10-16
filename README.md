@@ -53,12 +53,12 @@ No hace falta crear `.env`; las claves de IA se leen de él solo si existe (`cop
 ### En local
 1. **Crear y activar entorno virtual:**
    ```powershell
-   py -3.12 -m venv .venv
+   py -3.11 -m venv .venv
    .\.venv\Scripts\Activate.ps1
    ```
 2. **Instalar dependencias:**
    ```powershell
-   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
    ```
 3. **Variables de entorno:**
    ```powershell

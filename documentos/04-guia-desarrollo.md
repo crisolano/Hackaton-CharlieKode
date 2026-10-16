@@ -6,7 +6,7 @@ Acuerdos técnicos que los tres devs necesitan para no bloquearse entre sí. Los
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 copy .env.example .env          # completar las claves de IA (nunca subir .env)
 uvicorn app.main:app --reload   # http://localhost:8000  ·  Swagger: /docs  ·  Salud: /health
 pytest                          # pruebas

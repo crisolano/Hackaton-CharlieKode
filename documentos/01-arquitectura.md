@@ -131,7 +131,8 @@ Hackaton-CharlieKode/
 ├── Dockerfile               # imagen de la app                                     (Dev 3)
 ├── docker-compose.yml       # ruta reproducible para el jurado                     (Dev 3)
 ├── vercel.json              # configuración de despliegue (si hace falta)          (Dev 3)
-├── requirements.txt
+├── requirements.txt         # dependencias de ejecución (versiones fijadas)
+├── requirements-dev.txt     # + pytest y ruff
 ├── pyproject.toml           # configuración de ruff y pytest
 ├── .env.example             # variables sin valores reales
 ├── .gitignore               # incluye .env desde el primer commit
@@ -212,7 +213,7 @@ Principios: sin respuestas simuladas ni quemadas (penaliza 15 pts), proveedor in
 ## 12. Ejecución y despliegue
 | Modo | Comando |
 |---|---|
-| Local | `pip install -r requirements.txt` → `uvicorn app.main:app --reload` |
+| Local | `pip install -r requirements-dev.txt` → `uvicorn app.main:app --reload` |
 | Docker (jurado) | `docker compose up --build` |
 | Vercel | `vercel` (preview) / `vercel --prod`; `vercel env pull` para sincronizar variables |
 | Pruebas y lint | `pytest` · `ruff check .` · `ruff format .` |
