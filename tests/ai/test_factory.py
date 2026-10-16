@@ -31,5 +31,6 @@ def test_gemini_configurado_devuelve_cliente_gemini(monkeypatch):
     monkeypatch.setattr(settings, "AI_PROVIDER", "gemini")
     monkeypatch.setattr(settings, "GEMINI_API_KEY", "clave-de-prueba")
     monkeypatch.setattr(settings, "GEMINI_MODEL", "modelo-de-prueba")
+    monkeypatch.setattr(settings, "GEMINI_BASE_URL", "https://ia.test/v1")
     with get_ai_client() as cliente:
         assert isinstance(cliente, GeminiClient)

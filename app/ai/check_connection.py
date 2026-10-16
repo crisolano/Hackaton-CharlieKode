@@ -11,7 +11,8 @@ PROMPT_PRUEBA = "Responde únicamente con la palabra: ok"
 
 def main() -> int:
     try:
-        respuesta = get_ai_client().generate(PROMPT_PRUEBA)
+        with get_ai_client() as cliente:
+            respuesta = cliente.generate(PROMPT_PRUEBA)
     except AIError as exc:
         print(f"[FALLO] {settings.AI_PROVIDER}: {exc}")
         return 1

@@ -17,6 +17,8 @@ class GeminiClient(AIClient):
             raise AIError("Falta GEMINI_API_KEY en la configuración.")
         if not model:
             raise AIError("Falta GEMINI_MODEL en la configuración.")
+        if max_retries < 0:
+            raise AIError("AI_MAX_RETRIES no puede ser negativo.")
         self._model = model
         self._max_retries = max_retries
         self._http = httpx.Client(
@@ -51,17 +53,12 @@ class GeminiClient(AIClient):
     def close(self) -> None:
         self._http.close()
 
-    def __enter__(self) -> "GeminiClient":
-        return self
-
-    def __exit__(self, *exc_info) -> None:
-        self.close()
-
     @staticmethod
     def _extraer_texto(data: dict) -> str:
         if not isinstance(data, dict):
             raise AIError("Respuesta de Gemini con formato inesperado.")
-        if (data.get("promptFeedback") or {}).get("blockReason"):
+        feedback = data.get("promptFeedback")
+        if isinstance(feedback, dict) and feedback.get("blockReason"):
             raise AIError("Gemini bloqueó la petición por sus filtros de seguridad.")
         try:
             candidato = data["candidates"][0]

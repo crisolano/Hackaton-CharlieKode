@@ -128,6 +128,21 @@ def test_peticion_bloqueada_por_seguridad_lanza_error():
         _client(handler, max_retries=0).generate("hola")
 
 
+@pytest.mark.parametrize("feedback", ["texto suelto", ["lista"], 42, None])
+def test_prompt_feedback_malformado_no_rompe_y_se_ignora(feedback):
+    cuerpo = {**_ok("listo"), "promptFeedback": feedback}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=cuerpo)
+
+    assert _client(handler, max_retries=0).generate("hola") == "listo"
+
+
+def test_max_retries_negativo_lanza_error_claro():
+    with pytest.raises(AIError, match="negativo"):
+        GeminiClient("k", "m", "https://ia.test", 1, -1)
+
+
 def test_candidato_sin_contenido_lanza_error_con_el_motivo():
     cuerpo = {"candidates": [{"finishReason": "MAX_TOKENS"}]}
 
