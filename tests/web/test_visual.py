@@ -43,11 +43,11 @@ def test_salas_conserva_ids_campos_y_atributos_htmx(client, salas_de_prueba):
         assert atributo in r.text, atributo
 
 
-def test_portada_mantiene_incidencias_como_proximamente(client):
+def test_portada_enlaza_todos_los_modulos(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert r.text.count("Próximamente") == 1
-    assert "Equipos" in r.text and "Incidencias" in r.text
+    assert "Equipos" in r.text and "Incidencias" in r.text and "Espacios" in r.text
+    assert 'href="/incidencias"' in r.text
 
 
 # ---------------------------------------------------------------- carga y versionado

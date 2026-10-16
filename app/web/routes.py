@@ -11,10 +11,12 @@ from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.api.deps import ClienteIA
 from app.core.config import EquipoEstado, settings
 from app.core.database import get_db
 from app.core.errors import ERROR_MESSAGES, AppException, DatosInvalidos
-from app.schemas import PrestamoCreate, ReservaCreate
+from app.schemas import IncidenciaCreate, PrestamoCreate, ReservaCreate
+from app.services.incidencias import crear_incidencia, listar_incidencias
 from app.services.prestamos import (
     crear_prestamo,
     listar_equipos,
@@ -90,17 +92,15 @@ NAV_ITEMS: tuple[NavItem, ...] = (
         "/equipos",
         "Control de inventario, préstamo de recursos tecnológicos y registro de devoluciones.",
     ),
-    # Una línea por sección (Equipos, Incidencias...): evita conflictos de merge.
-)
-
-# Secciones previstas que todavía no tienen pantalla operativa; al implementarlas se
-# mueven a NAV_ITEMS. Se muestran como "próximamente" para no aparentar funciones que no existen.
-SECCIONES_PENDIENTES: tuple[SeccionPendiente, ...] = (
-    SeccionPendiente(
+    NavItem(
         "Incidencias",
-        "Registro de incidencias en texto libre con clasificación asistida por IA.",
+        "/incidencias",
+        "Reporte de incidencias en texto libre con triaje inteligente asistido por IA.",
     ),
 )
+
+# Secciones previstas que todavía no tienen pantalla operativa
+SECCIONES_PENDIENTES: tuple[SeccionPendiente, ...] = ()
 
 router = APIRouter(include_in_schema=False)
 
@@ -297,3 +297,39 @@ def devolver(
         prestamo=prestamo,
         **_contexto_equipos(db),
     )
+
+
+def _contexto_incidencias(db: Session) -> dict:
+    """Incidencias registradas ordenadas de más reciente a más antigua."""
+    return {
+        "incidencias": listar_incidencias(db),
+    }
+
+
+@router.get("/incidencias", response_class=HTMLResponse)
+def incidencias(request: Request, db: Annotated[Session, Depends(get_db)]) -> HTMLResponse:
+    """Muestra el panel de incidencias con historial y formulario de reporte con IA."""
+    return render(request, "incidencias.html", **_contexto_incidencias(db))
+
+
+@router.post("/incidencias/reportar", response_class=HTMLResponse)
+def reportar_incidencia(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    cliente_ia: ClienteIA,
+    texto: Annotated[str, Form()] = "",
+) -> HTMLResponse:
+    """Registra una incidencia y ejecuta el triaje automático con IA."""
+    try:
+        datos = IncidenciaCreate(texto=texto)
+    except ValidationError as exc:
+        raise DatosInvalidos(mensaje=_mensaje_validacion(exc)) from exc
+    incidencia = crear_incidencia(db, datos, ai_client=cliente_ia)
+    return render(
+        request,
+        "partials/incidencia_ok.html",
+        titulo="Incidencia registrada y clasificada",
+        incidencia=incidencia,
+        **_contexto_incidencias(db),
+    )
+

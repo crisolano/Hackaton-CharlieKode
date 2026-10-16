@@ -1,0 +1,18 @@
+<div class="alert alert-ok mb-4" role="status">
+  <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="check" pathLength="1" d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+  <div>
+    <p class="alert-title font-semibold">{{ titulo }}</p>
+    <p class="text-sm">La incidencia ha sido procesada con éxito por el sistema.</p>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs mt-2 bg-slate-800/40 p-2 rounded border border-slate-700/50">
+      <dt class="font-semibold text-slate-300">ID:</dt><dd>#{{ incidencia.id }}</dd>
+      <dt class="font-semibold text-slate-300">Categoría:</dt><dd><span class="badge badge-ok">{{ incidencia.categoria or 'Pendiente' }}</span></dd>
+      <dt class="font-semibold text-slate-300">Prioridad:</dt><dd><span class="badge {% if incidencia.prioridad in ['critica', 'alta'] %}badge-err{% else %}badge-soon{% endif %}">{{ incidencia.prioridad or 'Pendiente' }}</span></dd>
+      <dt class="font-semibold text-slate-300">Enrutamiento:</dt><dd class="text-cyan-400 font-medium">{{ incidencia.ruta or 'Revisión manual' }}</dd>
+      <dt class="font-semibold text-slate-300">Diagnóstico:</dt><dd>{% if incidencia.origen_ia %}<span class="text-emerald-400">🤖 Clasificación automática con IA</span>{% else %}<span class="text-amber-400">⚠️ Pendiente de revisión manual (Fallback seguro)</span>{% endif %}</dd>
+    </dl>
+  </div>
+</div>
+
+{% with oob=true %}
+{% include "partials/incidencias_panel.html" %}
+{% endwith %}

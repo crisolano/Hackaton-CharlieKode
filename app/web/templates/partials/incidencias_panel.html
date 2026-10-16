@@ -1,0 +1,95 @@
+<div id="incidencias-panel"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <section class="card mb-8">
+    <h2 class="text-lg font-semibold mb-2">Reportar nueva incidencia</h2>
+    <p class="muted text-sm mb-4">Describe la situación en lenguaje natural (ej: «El proyector del salón Cosmos parpadea y huele a quemado» o «Se cayó el internet en el piso 2»).</p>
+
+    <form method="post" action="/incidencias/reportar"
+          hx-post="/incidencias/reportar" hx-target="#resultado-incidencias" hx-swap="innerHTML"
+          hx-indicator="#cargando-incidencias"
+          hx-disabled-elt="#btn-reportar"
+          class="flex flex-col gap-4">
+      <div>
+        <label for="texto-incidencia" class="block text-sm font-medium mb-1">Descripción de la incidencia</label>
+        <textarea id="texto-incidencia" name="texto" rows="3" required minlength="5" maxlength="1000"
+                  placeholder="Escribe aquí los detalles del problema..."
+                  class="w-full rounded border border-slate-700 bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+      <div>
+        <button type="submit" id="btn-reportar"
+                class="btn btn-primary">
+          ✨ Reportar y clasificar con IA
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold">Incidencias registradas</h2>
+      <span class="muted text-xs">Total: {{ incidencias|length }}</span>
+    </div>
+
+    {% if incidencias %}
+    <div class="overflow-x-auto rounded-lg border border-slate-700 bg-[var(--surface)]">
+      <table class="min-w-full text-sm text-left">
+        <thead class="bg-slate-800/60 text-xs text-slate-300 uppercase tracking-wider">
+          <tr>
+            <th class="px-4 py-3">#</th>
+            <th class="px-4 py-3">Descripción</th>
+            <th class="px-4 py-3">Categoría</th>
+            <th class="px-4 py-3">Prioridad</th>
+            <th class="px-4 py-3">Enrutado a</th>
+            <th class="px-4 py-3">Estado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/60">
+          {% for inc in incidencias %}
+          <tr class="hover:bg-slate-800/30 transition-colors">
+            <td class="px-4 py-3 font-mono text-xs text-slate-400">#{{ inc.id }}</td>
+            <td class="px-4 py-3 max-w-xs truncate" title="{{ inc.texto }}">{{ inc.texto }}</td>
+            <td class="px-4 py-3">
+              {% if inc.categoria %}
+              <span class="badge badge-ok">{{ inc.categoria }}</span>
+              {% else %}
+              <span class="badge badge-off">Sin clasificar</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if inc.prioridad == 'critica' or inc.prioridad == 'alta' %}
+              <span class="badge badge-err">{{ inc.prioridad }}</span>
+              {% elif inc.prioridad == 'media' %}
+              <span class="badge badge-soon">{{ inc.prioridad }}</span>
+              {% elif inc.prioridad == 'baja' %}
+              <span class="badge badge-ok">{{ inc.prioridad }}</span>
+              {% else %}
+              <span class="muted text-xs">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if inc.ruta %}
+              <span class="text-xs font-medium text-cyan-400">{{ inc.ruta }}</span>
+              {% else %}
+              <span class="muted text-xs">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if inc.origen_ia %}
+              <span class="inline-flex items-center gap-1 text-xs text-emerald-400" title="Triaje realizado automáticamente por IA">
+                <span>🤖</span> {{ inc.estado }}
+              </span>
+              {% else %}
+              <span class="inline-flex items-center gap-1 text-xs text-amber-400" title="Pendiente de revisión manual">
+                <span>⚠️</span> {{ inc.estado }}
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="muted text-sm">No hay incidencias registradas en este momento.</p>
+    {% endif %}
+  </section>
+</div>

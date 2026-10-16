@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Incidencias · {{ project_name }}{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">Triaje asistido por IA</p>
+  <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1">Gestión de incidencias</h1>
+  <p class="muted text-sm mt-1">
+    Reporta problemas o solicitudes en texto libre. Nuestro motor de IA clasifica la categoría, asigna la prioridad y enruta al equipo correspondiente.
+  </p>
+</header>
+
+<div id="resultado-incidencias" class="mb-6" aria-live="polite"></div>
+<div id="cargando-incidencias" class="htmx-indicator alert alert-info mb-6" role="status">
+  <span class="inline-block animate-spin mr-2">⚙️</span>
+  <span>Analizando y clasificando la incidencia con Inteligencia Artificial…</span>
+</div>
+
+{% include "partials/incidencias_panel.html" %}
+{% endblock %}

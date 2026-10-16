@@ -22,11 +22,11 @@ def test_portada_sin_salas_explica_como_cargarlas(client):
     assert "python -m app.data.seed" in r.text
 
 
-def test_incidencias_se_anuncia_como_proximamente_sin_enlace(client):
+def test_todos_los_modulos_activos_con_enlaces(client):
     r = client.get("/")
-    assert r.text.count("Próximamente") == 1
+    assert 'href="/salas"' in r.text or 'href="/salas#reservar"' in r.text
     assert 'href="/equipos"' in r.text
-    assert 'href="/incidencias"' not in r.text
+    assert 'href="/incidencias"' in r.text
 
 
 def test_navegacion_marca_la_pagina_actual_y_tiene_enlace_de_salto(client):
@@ -209,7 +209,7 @@ def test_cabecera_sin_backdrop_filter_y_foco_sin_radio(client):
 
 def test_terminologia_de_la_interfaz(client, salas_de_prueba):
     portada = client.get("/").text
-    assert "Hoy puedes reservar salas. Equipos e incidencias llegan pronto." in portada
+    assert "triaje de incidencias asistido por IA" in portada
     assert "Reservas próximas" in portada and "Estado de las salas" in portada
     salas = client.get("/salas").text
     assert "<title>Reserva de salas · " in salas
