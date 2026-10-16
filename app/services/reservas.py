@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import NoEncontrado
 from app.models import Reserva, Sala
-from app.rules import validar_aforo, validar_solapamiento
+from app.rules import validar_aforo, validar_sala_disponible, validar_solapamiento
 from app.schemas import ReservaCreate
 
 
@@ -30,6 +30,9 @@ def crear_reserva(db: Session, datos: ReservaCreate) -> Reserva:
     - R2: Sin solapamiento de horarios en la misma sala.
     """
     sala = obtener_sala(db, datos.sala_id)
+
+    # Regla R3: la sala debe estar activa
+    validar_sala_disponible(sala_id=sala.id, estado=sala.estado)
 
     # Regla R1: Validar capacidad de la sala
     validar_aforo(
