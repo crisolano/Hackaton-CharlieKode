@@ -39,6 +39,8 @@ Verificación rápida antes de cada PR: buscar en el diff claves, literales de s
 | `GEMINI_API_KEY` / `GROQ_API_KEY` / `OPENROUTER_API_KEY` / `MISTRAL_API_KEY` | (vacío en el repo) | Claves; solo en `.env` o en el panel de Vercel |
 | `GEMINI_MODEL` | (vacío en el repo) | Modelo de Gemini autorizado para la jornada; sin valor por defecto, la app falla con un error claro si falta |
 | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta` | URL base de la API de Gemini |
+| `GROQ_MODEL` | (vacío en el repo) | Modelo de Groq (respaldo); sin valor por defecto, la app falla con un error claro si falta |
+| `GROQ_BASE_URL` | `https://api.groq.com/openai/v1` | URL base de la API de Groq (compatible con OpenAI) |
 | `AI_TIMEOUT_SECONDS` | `10` | Timeout por llamada a la IA |
 | `AI_MAX_RETRIES` | `1` | Reintentos acotados |
 
