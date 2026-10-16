@@ -1,3 +1,6 @@
+import time
+from collections.abc import Callable
+
 import httpx
 
 from app.ai.base import AIError
@@ -15,6 +18,11 @@ class GeminiClient(HttpAIClient):
         timeout: float,
         max_retries: int,
         transport: httpx.BaseTransport | None = None,
+        *,
+        backoff: float = 0.0,
+        tiempo_total: float | None = None,
+        dormir: Callable[[float], None] = time.sleep,
+        reloj: Callable[[], float] = time.monotonic,
     ):
         if not api_key:
             raise AIError("Falta GEMINI_API_KEY en la configuración.")
@@ -26,6 +34,10 @@ class GeminiClient(HttpAIClient):
             timeout=timeout,
             max_retries=max_retries,
             transport=transport,
+            backoff=backoff,
+            tiempo_total=tiempo_total,
+            dormir=dormir,
+            reloj=reloj,
         )
         self._model = model
 

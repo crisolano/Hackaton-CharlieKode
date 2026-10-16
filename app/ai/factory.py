@@ -2,6 +2,7 @@ import logging
 from collections.abc import Callable
 
 from app.ai.base import AIClient, AIError
+from app.ai.fallback import ClienteConRespaldo
 from app.ai.providers.gemini import GeminiClient
 from app.ai.providers.groq import GroqClient
 from app.core.config import settings
@@ -9,13 +10,22 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _opciones_comunes() -> dict[str, float]:
+    """Timeout, reintentos, espera y tope de tiempo: iguales para todos los proveedores."""
+    return {
+        "timeout": settings.AI_TIMEOUT_SECONDS,
+        "max_retries": settings.AI_MAX_RETRIES,
+        "backoff": settings.AI_BACKOFF_SECONDS,
+        "tiempo_total": settings.AI_TOTAL_TIMEOUT_SECONDS,
+    }
+
+
 def _crear_gemini() -> AIClient:
     return GeminiClient(
         api_key=settings.GEMINI_API_KEY,
         model=settings.GEMINI_MODEL,
         base_url=settings.GEMINI_BASE_URL,
-        timeout=settings.AI_TIMEOUT_SECONDS,
-        max_retries=settings.AI_MAX_RETRIES,
+        **_opciones_comunes(),
     )
 
 
@@ -24,8 +34,7 @@ def _crear_groq() -> AIClient:
         api_key=settings.GROQ_API_KEY,
         model=settings.GROQ_MODEL,
         base_url=settings.GROQ_BASE_URL,
-        timeout=settings.AI_TIMEOUT_SECONDS,
-        max_retries=settings.AI_MAX_RETRIES,
+        **_opciones_comunes(),
     )
 
 
@@ -60,9 +69,29 @@ def get_ai_client(proveedor: str | None = None) -> AIClient:
 
 
 def get_ai_client_seguro(proveedor: str | None = None) -> AIClient:
-    """Como get_ai_client, pero si la configuración falla devuelve un ClienteIANoDisponible."""
-    try:
-        return get_ai_client(proveedor)
-    except AIError as exc:
-        logger.warning("IA no disponible: %s", exc)
-        return ClienteIANoDisponible(str(exc))
+    """Cliente listo para usar que nunca falla al crearse.
+
+    Sin `proveedor` explícito usa AI_PROVIDER y, si AI_FALLBACK_PROVIDER está definido y es
+    distinto, lo añade como respaldo. Los proveedores mal configurados se omiten; si no queda
+    ninguno, devuelve un ClienteIANoDisponible (el triaje deja la incidencia en revisión).
+    """
+    principal = proveedor or settings.AI_PROVIDER
+    nombres = [principal]
+    respaldo = "" if proveedor else settings.AI_FALLBACK_PROVIDER
+    if respaldo and respaldo != principal:
+        nombres.append(respaldo)
+
+    clientes: list[AIClient] = []
+    motivos: list[str] = []
+    for nombre in nombres:
+        try:
+            clientes.append(get_ai_client(nombre))
+        except AIError as exc:
+            logger.warning("IA no disponible (%s): %s", nombre, exc)
+            motivos.append(str(exc))
+
+    if not clientes:
+        return ClienteIANoDisponible("; ".join(motivos))
+    if len(clientes) == 1:
+        return clientes[0]
+    return ClienteConRespaldo(clientes)
