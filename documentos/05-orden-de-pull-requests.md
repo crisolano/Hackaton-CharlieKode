@@ -14,6 +14,8 @@ Reglas de ramas en [03-gitflow.md](03-gitflow.md); plan general en [02-sprints.m
 5. **Dependencias de capas:** modelos → reglas → servicios → API y web (ver [01-arquitectura.md](01-arquitectura.md)).
 6. **Si cambia un contrato** (modelo, esquema, endpoint), se actualiza la documentación y se mergea antes de que otros lo consuman.
 
+7. **Para los agentes (Claude Code u otros):** antes de crear una rama o abrir un PR, comprobar aquí su identificador y la columna "Depende de". Si una dependencia no está mergeada en `develop`, no abrir el PR y avisar al usuario de qué PR falta; avisar también si algún PR salta el orden o apunta a `main`. Cada documento de dev de los sprints repite este aviso.
+
 ## Antes de empezar: ramas base incorrectas
 Hoy los PR #5, #8, #10 y #11 apuntan a `main` y el #7 se mergeó en `main`; las features deben ir a `develop`. Efectos: `develop` no tiene los modelos de Dev 1 y esos PR traen decenas de archivos ajenos (base vieja). Acción previa, antes de seguir mergeando (Santiago con cada autor):
 1. Sincronizar `develop` con `main` para que contenga el #7.
