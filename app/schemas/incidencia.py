@@ -9,7 +9,7 @@ from app.core.config import (
 
 
 class IncidenciaCreate(BaseModel):
-    texto: str = Field(..., min_length=1)
+    texto: str = Field(..., min_length=1, max_length=2000)
 
 
 class IncidenciaRead(BaseModel):

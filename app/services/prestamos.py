@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.core.config import EquipoEstado
-from app.core.errors import DatosInvalidos, NoEncontrado
+from app.core.errors import DatosInvalidos, NoEncontrado, RecursoNoDisponible
 from app.models import Equipo, Prestamo
 from app.rules import validar_equipo_disponible
 from app.schemas import PrestamoCreate
@@ -19,14 +19,16 @@ def obtener_equipo(db: Session, equipo_id: int) -> Equipo:
     return equipo
 
 
-def listar_equipos(db: Session, estado: str | None = None) -> list[Equipo]:
+def listar_equipos(
+    db: Session, estado: str | None = None, limit: int = 100, offset: int = 0
+) -> list[Equipo]:
     """
     Lista todos los equipos registrados, opcionalmente filtrados por estado.
     """
     query = db.query(Equipo)
     if estado is not None:
         query = query.filter(Equipo.estado == estado)
-    return query.order_by(Equipo.nombre.asc()).all()
+    return query.order_by(Equipo.nombre.asc()).offset(offset).limit(limit).all()
 
 
 def obtener_prestamo(db: Session, prestamo_id: int) -> Prestamo:
@@ -77,8 +79,15 @@ def crear_prestamo(
             mensaje="La fecha estimada de devolución debe ser posterior al inicio del préstamo."
         )
 
-    # Actualizar estado del equipo a PRESTADO
-    equipo.estado = EquipoEstado.PRESTADO.value
+    # Cambio atómico: si otra petición ganó la carrera, 0 filas y se rechaza (R3).
+    filas = (
+        db.query(Equipo)
+        .filter(Equipo.id == equipo.id, Equipo.estado == EquipoEstado.DISPONIBLE.value)
+        .update({"estado": EquipoEstado.PRESTADO.value}, synchronize_session=False)
+    )
+    if filas == 0:
+        db.rollback()
+        raise RecursoNoDisponible(recurso="equipo", id=datos.equipo_id)
 
     nuevo_prestamo = Prestamo(
         equipo_id=datos.equipo_id,
@@ -110,13 +119,16 @@ def registrar_devolucion(
     """
     prestamo = obtener_prestamo(db, prestamo_id)
 
-    if prestamo.devuelto_en is not None:
-        raise DatosInvalidos(
-            mensaje=f"El préstamo #{prestamo_id} ya fue devuelto con fecha {prestamo.devuelto_en}."
-        )
-
     ahora = fecha_devolucion_real or datetime.now()
-    prestamo.devuelto_en = ahora
+    # Cierre atómico: solo una petición puede devolver el mismo préstamo.
+    filas = (
+        db.query(Prestamo)
+        .filter(Prestamo.id == prestamo_id, Prestamo.devuelto_en.is_(None))
+        .update({"devuelto_en": ahora}, synchronize_session=False)
+    )
+    if filas == 0:
+        db.rollback()
+        raise DatosInvalidos(mensaje=f"El préstamo #{prestamo_id} ya fue devuelto.")
 
     equipo = obtener_equipo(db, prestamo.equipo_id)
     equipo.estado = EquipoEstado.DISPONIBLE.value

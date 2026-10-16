@@ -66,10 +66,14 @@ class Settings:
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "")
     GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
-    MISTRAL_API_KEY: str = os.getenv("MISTRAL_API_KEY", "")
     AI_TIMEOUT_SECONDS: int = int(os.getenv("AI_TIMEOUT_SECONDS", "10"))
     AI_MAX_RETRIES: int = int(os.getenv("AI_MAX_RETRIES", "1"))
+    # Si se define, todos los endpoints /api exigen esta clave en el header X-API-Key.
+    API_KEY: str = os.getenv("API_KEY", "")
+    # En "production" se ocultan /docs, /redoc y /openapi.json.
+    APP_ENV: str = os.getenv("APP_ENV", "development")
+    # Peticiones por minuto y por cliente para POST /api/incidencias (llaman a la IA).
+    INCIDENCIAS_POR_MINUTO: int = int(os.getenv("INCIDENCIAS_POR_MINUTO", "20"))
 
 
 settings = Settings()
