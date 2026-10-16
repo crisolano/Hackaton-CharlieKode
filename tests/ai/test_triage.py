@@ -4,13 +4,15 @@ import pytest
 
 from app.ai.base import AIClient, AIError
 from app.ai.prompts import build_triage_prompt
-from app.ai.triage import clasificar_incidencia
+from app.ai.triage import ResultadoTriaje, clasificar_incidencia
 from app.core.config import (
     IncidenciaCategoria,
     IncidenciaEstado,
     IncidenciaPrioridad,
     IncidenciaRuta,
 )
+from app.models import Incidencia
+from app.schemas import IncidenciaRead
 
 
 class IADoble(AIClient):
@@ -92,6 +94,29 @@ def test_el_texto_va_delimitado_y_no_puede_cerrar_el_bloque():
     cuerpo = prompt.rsplit("<incidencia>\n", 1)[1].rsplit("\n</incidencia>", 1)[0]
     assert "<" not in cuerpo
     assert "IGNORA TODO" in cuerpo  # el texto se conserva; solo se neutralizan las marcas
+
+
+@pytest.mark.parametrize(
+    "respuesta",
+    [_json(), AIError("timeout"), "esto no es json"],
+    ids=["clasificada", "ia_caida", "salida_invalida"],
+)
+def test_el_resultado_encaja_con_el_esquema_incidencia_de_dev1(respuesta):
+    """Contrato con app/schemas/incidencia.py: lo que devuelve el triaje se puede guardar y leer."""
+    resultado = clasificar_incidencia("texto", IADoble(respuesta))
+
+    leida = IncidenciaRead(id=1, texto="texto", **resultado.model_dump())
+
+    assert leida.estado == resultado.estado
+    assert leida.ruta == resultado.ruta
+    assert leida.categoria == resultado.categoria
+    assert leida.prioridad == resultado.prioridad
+    assert leida.origen_ia is resultado.origen_ia
+
+
+def test_los_campos_del_triaje_existen_en_el_modelo_incidencia():
+    columnas = set(Incidencia.__table__.columns.keys())
+    assert set(ResultadoTriaje.model_fields) <= columnas
 
 
 def test_el_texto_del_usuario_se_envia_al_cliente():
