@@ -10,6 +10,10 @@ Todas salen de `develop` (ya actualizada con el Sprint 1) y vuelven por PR. Orde
 | 3 | `feature/dev1-servicio-prestamos` | Préstamo y devolución, seed de equipos | `develop` |
 | 4 | `feature/dev1-servicio-incidencias` | Registro, estados y persistencia (publicar la firma temprano para Dev 2) | `develop` |
 
+**Orden de merge:** fase 1 = `S2-PR1`, fase 2 = `S2-PR3`, fase 3 = `S2-PR4`, fase 4 = `S2-PR5`. Detalle, dependencias y zonas de choque en [05-orden-de-pull-requests.md](../../05-orden-de-pull-requests.md).
+
+> **Aviso para el agente y para quien trabaja:** antes de crear una rama o abrir un PR, consulta ese documento. Si alguna dependencia (columna "Depende de") todavía no está mergeada en `develop`, no abras el PR: avisa al usuario de qué PR falta y quién lo tiene. Si ves que un PR salta el orden o apunta a `main`, avísalo también.
+
 Antes de cada PR: `git merge origin/develop`, `pytest` y `ruff check .`.
 
 - [ ] Modelos `Equipo`, `Prestamo` e `Incidencia` y sus esquemas.

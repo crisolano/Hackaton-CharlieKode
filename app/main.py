@@ -3,8 +3,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.errors import setup_exception_handlers
+from app.core.logging_config import setup_logging
 from app.web.routes import STATIC_DIR
 from app.web.routes import router as web_router
+
+setup_logging()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
