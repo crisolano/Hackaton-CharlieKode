@@ -64,6 +64,8 @@ class Settings:
         "GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta"
     )
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "")
+    GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     MISTRAL_API_KEY: str = os.getenv("MISTRAL_API_KEY", "")
     AI_TIMEOUT_SECONDS: int = int(os.getenv("AI_TIMEOUT_SECONDS", "10"))
