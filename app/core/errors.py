@@ -1,8 +1,25 @@
-from typing import Any
+from __future__ import annotations
 
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+import logging
+from typing import TYPE_CHECKING, Any
+
+# Este módulo lo importan las reglas y los servicios (capas puras): no debe cargar
+# FastAPI ni Starlette al importarse. Esos imports viven dentro de
+# setup_exception_handlers().
+if TYPE_CHECKING:
+    from fastapi import FastAPI, Request
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.responses import JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger(__name__)
+
+# Códigos HTTP del contrato (guía de desarrollo, sección 5)
+HTTP_BAD_REQUEST = 400
+HTTP_NOT_FOUND = 404
+HTTP_CONFLICT = 409
+HTTP_UNPROCESSABLE = 422
+HTTP_INTERNAL_ERROR = 500
 
 # Mensajes y textos centralizados (para facilitar cambios en la defensa)
 ERROR_MESSAGES = {
@@ -20,7 +37,7 @@ class AppException(Exception):
         self,
         codigo: str,
         mensaje: str | None = None,
-        status_code: int = status.HTTP_400_BAD_REQUEST,
+        status_code: int = HTTP_BAD_REQUEST,
         detalles: Any = None,
     ):
         self.codigo = codigo
@@ -35,7 +52,7 @@ class AforoExcedido(AppException):
         super().__init__(
             codigo="AFORO_EXCEDIDO",
             mensaje=mensaje or ERROR_MESSAGES["AFORO_EXCEDIDO"],
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_UNPROCESSABLE,
             detalles=detalles,
         )
 
@@ -45,7 +62,7 @@ class SalaOcupada(AppException):
         super().__init__(
             codigo="SALA_OCUPADA",
             mensaje=mensaje or ERROR_MESSAGES["SALA_OCUPADA"],
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=HTTP_CONFLICT,
             detalles=detalles,
         )
 
@@ -55,7 +72,7 @@ class RecursoNoDisponible(AppException):
         super().__init__(
             codigo="RECURSO_NO_DISPONIBLE",
             mensaje=mensaje or ERROR_MESSAGES["RECURSO_NO_DISPONIBLE"],
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=HTTP_CONFLICT,
             detalles=detalles,
         )
 
@@ -65,7 +82,7 @@ class NoEncontrado(AppException):
         super().__init__(
             codigo="NO_ENCONTRADO",
             mensaje=mensaje or ERROR_MESSAGES["NO_ENCONTRADO"],
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=HTTP_NOT_FOUND,
             detalles=detalles,
         )
 
@@ -75,12 +92,17 @@ class DatosInvalidos(AppException):
         super().__init__(
             codigo="DATOS_INVALIDOS",
             mensaje=mensaje or ERROR_MESSAGES["DATOS_INVALIDOS"],
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_UNPROCESSABLE,
             detalles=detalles,
         )
 
 
 def setup_exception_handlers(app: FastAPI) -> None:
+    from fastapi.exception_handlers import http_exception_handler as default_http_handler
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.responses import JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
     @app.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
         content = {
@@ -97,7 +119,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_UNPROCESSABLE,
             content={
                 "ok": False,
                 "codigo": "DATOS_INVALIDOS",
@@ -106,10 +128,39 @@ def setup_exception_handlers(app: FastAPI) -> None:
             },
         )
 
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        # Solo 404 y 5xx tienen código propio en el contrato (guía, sección 5);
+        # el resto de errores HTTP conserva el comportamiento por defecto.
+        if exc.status_code == HTTP_NOT_FOUND:
+            codigo = "NO_ENCONTRADO"
+        elif exc.status_code >= HTTP_INTERNAL_ERROR:
+            codigo = "ERROR_INTERNO"
+            logger.error(
+                "Error HTTP %s en %s %s",
+                exc.status_code,
+                request.method,
+                request.url.path,
+                exc_info=(type(exc), exc, exc.__traceback__),
+            )
+        else:
+            return await default_http_handler(request, exc)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"ok": False, "codigo": codigo, "mensaje": ERROR_MESSAGES[codigo]},
+            headers=getattr(exc, "headers", None),
+        )
+
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error(
+            "Error no controlado en %s %s",
+            request.method,
+            request.url.path,
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=HTTP_INTERNAL_ERROR,
             content={
                 "ok": False,
                 "codigo": "ERROR_INTERNO",
