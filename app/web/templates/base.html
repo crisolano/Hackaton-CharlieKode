@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ project_name }}{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+      <a href="/" class="font-semibold text-slate-900">{{ project_name }}</a>
+      <nav class="flex gap-4 text-sm">
+        {% for item in nav_items %}
+        <a href="{{ item.href }}"
+           class="{{ 'font-semibold text-indigo-600' if item.href == request.url.path else 'text-slate-600 hover:text-slate-900' }}">
+          {{ item.label }}
+        </a>
+        {% endfor %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
