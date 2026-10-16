@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import FastAPI, Request, status
+from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -108,15 +109,16 @@ def setup_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        # Solo 404 y 5xx tienen código propio en el contrato (guía, sección 5);
+        # el resto de errores HTTP conserva el comportamiento por defecto.
         if exc.status_code == status.HTTP_404_NOT_FOUND:
             codigo = "NO_ENCONTRADO"
-            mensaje = ERROR_MESSAGES["NO_ENCONTRADO"]
+        elif exc.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+            codigo = "ERROR_INTERNO"
         else:
-            codigo = "ERROR_INTERNO" if exc.status_code >= 500 else "DATOS_INVALIDOS"
-            mensaje = ERROR_MESSAGES[codigo]
+            return await default_http_exception_handler(request, exc)
+        mensaje = ERROR_MESSAGES[codigo]
         return JSONResponse(
             status_code=exc.status_code,
             content={"ok": False, "codigo": codigo, "mensaje": mensaje},

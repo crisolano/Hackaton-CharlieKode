@@ -2,6 +2,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.errors import (
     AforoExcedido,
@@ -44,6 +45,14 @@ def _build_client() -> TestClient:
     @app.get("/boom")
     def boom():
         raise RuntimeError("detalle interno secreto")
+
+    @app.post("/solo-post")
+    def solo_post():
+        return {"ok": True}
+
+    @app.get("/http503")
+    def http503():
+        raise StarletteHTTPException(status_code=503, detail="detalle interno secreto")
 
     @app.post("/validar")
     def validar(payload: _Payload):
@@ -95,6 +104,21 @@ def test_ruta_inexistente_devuelve_no_encontrado(client):
     data = response.json()
     assert data["ok"] is False
     assert data["codigo"] == "NO_ENCONTRADO"
+
+
+def test_error_http_5xx_usa_error_interno_sin_exponer_detalle(client):
+    response = client.get("/http503")
+    assert response.status_code == 503
+    data = response.json()
+    assert data["ok"] is False
+    assert data["codigo"] == "ERROR_INTERNO"
+    assert "secreto" not in response.text
+
+
+def test_otros_errores_http_conservan_su_estado_y_no_se_etiquetan_como_datos_invalidos(client):
+    response = client.get("/solo-post")
+    assert response.status_code == 405
+    assert response.json().get("codigo") != "DATOS_INVALIDOS"
 
 
 def test_excepcion_no_controlada_no_expone_detalles(client):
