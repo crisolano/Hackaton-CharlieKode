@@ -21,7 +21,7 @@ HTTP_CONFLICT = 409
 HTTP_UNPROCESSABLE = 422
 HTTP_INTERNAL_ERROR = 500
 
-# Mensajes y textos centralizados (para facilitar cambios en la defensa)
+# Mensajes y plantillas centralizadas (para facilitar cambios en la defensa)
 ERROR_MESSAGES = {
     "AFORO_EXCEDIDO": "El aforo solicitado excede la capacidad máxima de la sala.",
     "SALA_OCUPADA": "La sala ya se encuentra reservada en el horario solicitado.",
@@ -33,6 +33,16 @@ ERROR_MESSAGES = {
         "El servicio de IA no está disponible; la solicitud quedó pendiente de revisión manual."
     ),
 }
+
+ERROR_TEMPLATES = {
+    "AFORO_EXCEDIDO": "La sala {sala} admite {aforo} personas y se pidieron {asistentes}.",
+    "SALA_OCUPADA": "La sala {sala} ya está reservada entre {inicio} y {fin}.",
+    "RECURSO_NO_DISPONIBLE": "El recurso {recurso} con id {id} no se encuentra disponible.",
+    "NO_ENCONTRADO": "No existe {recurso} con id {id}.",
+}
+
+MSG_ERROR_RANGO_HORARIO = "La fecha de inicio debe ser anterior a la fecha de fin."
+MSG_ERROR_TIMEZONE = "Las fechas de reserva deben ser en hora local sin zona horaria (naive)."
 
 
 class AppException(Exception):
@@ -51,7 +61,18 @@ class AppException(Exception):
 
 
 class AforoExcedido(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        sala: str | None = None,
+        aforo: int | None = None,
+        asistentes: int | None = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and sala is not None and aforo is not None and asistentes is not None:
+            mensaje = ERROR_TEMPLATES["AFORO_EXCEDIDO"].format(
+                sala=sala, aforo=aforo, asistentes=asistentes
+            )
         super().__init__(
             codigo="AFORO_EXCEDIDO",
             mensaje=mensaje or ERROR_MESSAGES["AFORO_EXCEDIDO"],
@@ -61,7 +82,16 @@ class AforoExcedido(AppException):
 
 
 class SalaOcupada(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        sala: str | None = None,
+        inicio: Any = None,
+        fin: Any = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and sala is not None and inicio is not None and fin is not None:
+            mensaje = ERROR_TEMPLATES["SALA_OCUPADA"].format(sala=sala, inicio=inicio, fin=fin)
         super().__init__(
             codigo="SALA_OCUPADA",
             mensaje=mensaje or ERROR_MESSAGES["SALA_OCUPADA"],
@@ -71,7 +101,15 @@ class SalaOcupada(AppException):
 
 
 class RecursoNoDisponible(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        recurso: str | None = None,
+        id: Any = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and recurso is not None and id is not None:
+            mensaje = ERROR_TEMPLATES["RECURSO_NO_DISPONIBLE"].format(recurso=recurso, id=id)
         super().__init__(
             codigo="RECURSO_NO_DISPONIBLE",
             mensaje=mensaje or ERROR_MESSAGES["RECURSO_NO_DISPONIBLE"],
@@ -81,7 +119,15 @@ class RecursoNoDisponible(AppException):
 
 
 class NoEncontrado(AppException):
-    def __init__(self, mensaje: str | None = None, detalles: Any = None):
+    def __init__(
+        self,
+        recurso: str | None = None,
+        id: Any = None,
+        mensaje: str | None = None,
+        detalles: Any = None,
+    ):
+        if mensaje is None and recurso is not None and id is not None:
+            mensaje = ERROR_TEMPLATES["NO_ENCONTRADO"].format(recurso=recurso, id=id)
         super().__init__(
             codigo="NO_ENCONTRADO",
             mensaje=mensaje or ERROR_MESSAGES["NO_ENCONTRADO"],
@@ -100,7 +146,20 @@ class DatosInvalidos(AppException):
         )
 
 
+def _errores_serializables(errores: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Los validadores de Pydantic dejan la excepción original en `ctx`; se pasa a texto."""
+    limpios = []
+    for error in errores:
+        error = dict(error)
+        ctx = error.get("ctx")
+        if isinstance(ctx, dict):
+            error["ctx"] = {k: str(v) if isinstance(v, Exception) else v for k, v in ctx.items()}
+        limpios.append(error)
+    return limpios
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
+    from fastapi.encoders import jsonable_encoder
     from fastapi.exception_handlers import http_exception_handler as default_http_handler
     from fastapi.exceptions import RequestValidationError
     from fastapi.responses import JSONResponse
@@ -127,7 +186,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
                 "ok": False,
                 "codigo": "DATOS_INVALIDOS",
                 "mensaje": ERROR_MESSAGES["DATOS_INVALIDOS"],
-                "detalles": exc.errors(),
+                "detalles": jsonable_encoder(_errores_serializables(exc.errors())),
             },
         )
 
